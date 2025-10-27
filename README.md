@@ -112,6 +112,7 @@ conda env create -f environment.yml
 conda activate exp-env
 
 # 3️⃣ Run a test case
+python main.py gen ./burma14
 python main.py smt2 burma14 7 2 10
 ```
 
