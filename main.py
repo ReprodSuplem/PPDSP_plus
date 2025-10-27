@@ -44,7 +44,9 @@ else:
 	elif mode == "maxsat":
 		solver = PPDSP_MaxSAT(tsplib, request, vehicle, connect)
 		solver.genMaxsatFormular()
-		solver.solve(solver="rc2")
+		solver.solve(solver="uwr")
+		# solver.solve(solver="rc2")
+		# solver.solve(solver="rc2", use_stratified=True)
 	else:
 		print(f"Unknown mode: {mode}")
 		sys.exit(1)
