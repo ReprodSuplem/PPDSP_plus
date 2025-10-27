@@ -32,8 +32,8 @@ python main.py <solver> <tsplib_file> <num_requests> <num_vehicles> <connectivit
 ### Arguments
 | Argument         | Description                             | Example                           |
 | ---------------- | --------------------------------------- | --------------------------------- |
-| `<solver>`       | Solver type                             | `mip`, `smt2`, `maxsat` |
-| `<tsplib_file>`  | TSPLIB instance file name               | `burma14`,`ulysses16`                     |
+| `<solver>`       | Solver type                             | `mip`, `smt2`, `maxsat`           |
+| `<tsplib_file>`  | TSPLIB instance file name               | `burma14`,`ulysses16`             |
 | `<num_requests>` | Number of pickup-delivery requests      | `7`                               |
 | `<num_vehicles>` | Number of available vehicles            | `2`                               |
 | `<connectivity>` | Connectivity ratio for adjacency matrix | `10`                              |
@@ -44,7 +44,7 @@ Run PPDSP on a small TSPLIB instance:
 
 ```bash
 # Generating instance agruments
-
+python main.py gen ./burma14
 
 # Solving by Z3 solver
 python main.py smt2 burma14 7 2 10
@@ -55,18 +55,6 @@ python main.py mip burma14 7 4 10
 # Solving by RC2 solver
 python main.py maxsat burma14 13 2 10
 ```
-
-## 📁 Project Structure
-ppdsp_plus/
-│
-├── main.py                     # Main entry point
-├── ppdsp_reform_ins_arg.py     # Instance generation
-├── ppdsp_reform_p1_cplex.py    # CPLEX-based solver
-├── ppdsp_reform_p1_rc2.py      # RC2 / MaxSAT-based solver
-├── ppdsp_reform_p1_z3.py       # Z3-based solver
-├── ppdsp_reform_ins_gen.py     # Instance preprocessing
-├── burma14.tsp, ulysses16.tsp  # Example TSPLIB instances
-└── environment.yml              # Conda environment configuration
 
 ## ⚙️ Notes
 
