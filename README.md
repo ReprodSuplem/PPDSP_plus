@@ -1,6 +1,6 @@
 # PPDSP_Plus
 
-This repository contains code for the **Pickup and Delivery Problem with Stochastic Processing (PPDSP)** using multiple solvers including **Z3**, **CPLEX**, and **MaxSAT** (RC2 / UWRMaxSAT).
+This repository contains code for the **Profit-maximizing multi-vehicle Pickup and Delivery Selection Problem (PPDSP)** using multiple solvers including **Z3**, **CPLEX**, and **MaxSAT** (RC2 / UWRMaxSAT).
 
 ---
 
