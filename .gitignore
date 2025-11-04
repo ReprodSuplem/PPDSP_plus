@@ -1,0 +1,21 @@
+# env
+venv/
+.env/
+
+# Python
+__pycache__/
+*.pyc
+
+# log
+*.log
+
+# output data
+*.csv
+*.lp
+*.wcnf
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
