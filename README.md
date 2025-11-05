@@ -26,13 +26,14 @@ The main entry point is main.py.
 It accepts the following command-line arguments:
 
 ```bash
-python main.py <solver> <tsplib_file> <num_requests> <num_vehicles> <connectivity>
+python main.py <mode> <method> <tsplib_file> <num_requests> <num_vehicles> <connectivity>
 ```
 
 ### Arguments
 | Argument         | Description                             | Example                           |
 | ---------------- | --------------------------------------- | --------------------------------- |
-| `<solver>`       | Solver type                             | `mip`, `smt2`, `maxsat`           |
+| `<mode>`         | Solver type                             | `mip`, `smt2`, `maxsat`           |
+| `<method>`       | Proposed method                         | `p1`, `p2`                        |
 | `<tsplib_file>`  | TSPLIB instance file name               | `burma14`,`ulysses16`             |
 | `<num_requests>` | Number of pickup-delivery requests      | `7`                               |
 | `<num_vehicles>` | Number of available vehicles            | `2`                               |
@@ -44,16 +45,16 @@ Run PPDSP on a small TSPLIB instance:
 
 ```bash
 # Generating instance agruments
-python main.py gen ./burma14
+python main.py gen ./burma14.tsp
 
 # Solving by Z3 solver
-python main.py smt2 burma14 7 2 10
+python main.py smt2 p1 burma14 7 2 10
 
 # Solving by CPLEX solver
-python main.py mip burma14 7 4 10
+python main.py mip p1 burma14 7 4 10
 
 # Solving by RC2 solver
-python main.py maxsat burma14 13 2 10
+python main.py maxsat p2 burma14 13 2 10
 ```
 
 ## ⚙️ Notes
@@ -66,7 +67,7 @@ python main.py maxsat burma14 13 2 10
 # main.py
 ...
 elif mode ==  "maxsat":
-	solver = PPDSP_MaxSAT(tsplib, request, vehicle, connect)
+	...
 	solver.genMaxsatFormular()
 	solver.solve(solver="uwr")
 	# solver.solve(solver="rc2")
@@ -112,8 +113,8 @@ conda env create -f environment.yml
 conda activate exp-env
 
 # 3️⃣ Run a test case
-python main.py gen ./burma14
-python main.py smt2 burma14 7 2 10
+python main.py gen ./burma14.tsp
+python main.py maxsat p2 burma14 7 2 10
 ```
 
 ## 🧠 Citation
