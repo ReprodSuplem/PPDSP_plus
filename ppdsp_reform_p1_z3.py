@@ -3,7 +3,7 @@
 from ppdsp_reform_ins_gen import PPDSP_reform
 from z3 import *
 
-class PPDSP_SMT2(PPDSP_reform):
+class PPDSP_SMT2_p1(PPDSP_reform):
 	def __init__(self, tsplib, request, vehicle, connect):
 		super().__init__(tsplib, request, vehicle, connect)
 		self.smt2Opt = Optimize()
@@ -191,6 +191,12 @@ class PPDSP_SMT2(PPDSP_reform):
 
 	def solve(self):
 		print(f"z3: solving instance: {self.insName} ...")
+		with open(f"{self.insName}.out", "w") as f:
+			def log(msg):
+				print(msg)
+				f.write(msg + "\n")
+				f.flush()
+
 		if self.smt2Opt.check() == sat:
 			model = self.smt2Opt.model()
 			xModel = []
@@ -201,15 +207,17 @@ class PPDSP_SMT2(PPDSP_reform):
 						if is_true(val):
 							xModel.append(f"x{self.xVarList[i][j][k]}")
 			print("xVar:", " ".join(xModel))
+			log("xVar: " + " ".join(xModel))
+
 			yModel = []
 			for i in range(self.lenOfRequest):
 				for j in range(self.lenOfVehicle):
 					val = model.evaluate(self.smt2y[i][j], model_completion=True)
 					if is_true(val):
 						yModel.append(f"y{self.yVarList[i][j]}")
-			print("yVar:", " ".join(yModel))
-			print("max value =", self.smt2Opt.lower(self.optimal))
+			log("yVar: " + " ".join(yModel))
+			log(f"max value = {self.smt2Opt.lower(self.optimal)}")
 		else:
-			print("UNSAT")
+			log("UNSAT")
 
 

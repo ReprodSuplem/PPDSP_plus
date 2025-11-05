@@ -24,6 +24,7 @@ class PPDSP_reform:
 	lenOfVehicle = 0
 	xVarList = []
 	yVarList = []
+	nuVarList = []
 	uVarList = []
 	hVarList = []
 
@@ -38,8 +39,11 @@ class PPDSP_reform:
 
 		self.xVarList = [[[0] * (1 + self.lenOfLocation)
 						  for j in range(1 + self.lenOfLocation)]
-						 for i in range(self.lenOfVehicle)]
+						  for i in range(self.lenOfVehicle)]
 		self.yVarList = [[0] * self.lenOfVehicle for i in range(self.lenOfRequest)]
+		self.nuVarList = [[[0] * self.lenOfLocation # Size of the set {0, ..., |V|-2} = self.lenOfLocation
+						  for j in range(self.lenOfLocation)]
+						  for i in range(self.lenOfVehicle)]
 		self.uVarList = [[0] * self.lenOfLocation for i in range(self.lenOfVehicle)]
 		self.hVarList = [[0] * self.lenOfLocation for i in range(self.lenOfVehicle)]
 
@@ -110,6 +114,19 @@ class PPDSP_reform:
 		print('y^t_r')
 		for i in range(len(self.yVarList)):
 			print(self.yVarList[i])
+
+	# Variable 'nu^t_{dp}'
+	def genNuVarList(self):
+		for i in range(len(self.nuVarList)):
+			for j in range(len(self.nuVarList[i])):
+				for k in range(len(self.nuVarList[i][j])):
+					self.nuVarList[i][j][k] = self.newVarID()
+
+	def printNuVarList(self):
+		for i in range(len(self.nuVarList)):
+			print('nu^{{{0}}}{1}'.format(i,'dp'))
+			for j in range(len(self.nuVarList[i])):
+				print(self.nuVarList[i][j])
 
 	# Variable 'u^t_v'
 	def genUVarList(self):

@@ -224,4 +224,9 @@ class PPDSP_MIP(PPDSP_reform):
 
 	def solve(self):
 		self.cpx.solve()
-		print("Objective value:", self.cpx.solution.get_objective_value())
+		opt = self.cpx.solution.get_objective_value()
+		varValues = self.cpx.solution.get_values()
+		varNames = self.cpx.variables.get_names()
+		filtered_model = [varNames[i] for i, val in enumerate(varValues) if val > 1e-6]
+		print(f"Result: OPTIMAL, cost = {opt}")
+		print(f"Model: {filtered_model}")

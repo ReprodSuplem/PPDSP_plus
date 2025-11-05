@@ -1,19 +1,18 @@
-# ppdsp_reform_p1_rc2.py
+# ppdsp_reform_p2_rc2.py
 
 from ppdsp_reform_ins_gen import PPDSP_reform
 from pysat.pb import *
 from pysat.formula import *
 from pysat.card import CardEnc
 
-class PPDSP_MaxSAT_p1(PPDSP_reform):
+class PPDSP_MaxSAT_p2(PPDSP_reform):
 	def __init__(self, tsplib, request, vehicle, connect):
 		super().__init__(tsplib, request, vehicle, connect)
 		self.wcnf = WCNF()
 		self.cnf = CNF()
 		self.vpool = None
-		self.uVarLits = [[[] for j in range(self.lenOfLocation)] for i in range(self.lenOfVehicle)]
 		self.hVarLits = [[[] for j in range(self.lenOfLocation)] for i in range(self.lenOfVehicle)]
-		self.insName = f"p1_{tsplib}_r{request}v{vehicle}c{connect}"
+		self.insName = f"p2_{tsplib}_r{request}v{vehicle}c{connect}"
 
 	def atLeastOne(self, varList):
 		self.wcnf.append(varList)
@@ -89,8 +88,36 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 						varList.append(self.xVarList[i][j][k])
 				self.atMostOne(varList)
 
+	# MTZ-SEC
+	def genHardClauseForEq8_1(self):
+		for i in range(self.lenOfVehicle):
+			for j in range(self.lenOfLocation):
+				for k in range(self.lenOfLocation):
+					if k != j:
+						clause = [-self.xVarList[i][j][k]] + [l for l in self.nuVarList[i][k]]
+						self.wcnf.append(clause)
+
+	def genHardClauseForEq8_2(self):
+		for i in range(self.lenOfVehicle):
+			for j in range(self.lenOfLocation):
+				for k in range(self.lenOfLocation):
+					if k != j:
+						for l in range(self.lenOfLocation): # p: from 0 to |V|-2
+							for m in range(self.lenOfLocation):
+								if m != l: # p': from 0 to |V|-2 and inconsistent with p
+									clause = [-self.xVarList[i][j][k], -self.nuVarList[i][k][l], -self.nuVarList[i][j][m]]
+									self.wcnf.append(clause)
+
+	def genHardClauseForEq9_1(self):
+		for i in range(self.lenOfRequest):
+			for j in range(self.lenOfVehicle):
+				for k in range(self.lenOfLocation): # p: from 0 to |V|-2
+					for l in range(1 + k): # p': from 0 to p
+						clause = [-self.yVarList[i][j], -self.nuVarList[j][self.requestList[i][2]][k], -self.nuVarList[j][self.requestList[i][3]][l]]
+						self.wcnf.append(clause)
+
 	def resetVarIDforMaxSAT(self):
-		self.varID = self.uVarList[0][0] - 1 # Reset to varID to 1st variable 'u^t_v'
+		self.varID = self.hVarList[0][0] - 1 # Reset to varID to 1st variable 'h^t_v'
 
 	def genHardClauseForEq11(self): # Literals allocation for Eq.11
 		self.resetVarIDforMaxSAT()
@@ -104,43 +131,6 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 			for j in range(len(self.hVarLits[i])):
 				print('h^{{{0}}}{1}_[{2}]'.format(i,'v', self.hVarList[i][j]))
 				print(self.hVarLits[i][j])
-
-	def genHardClauseForEq12(self): # Literals allocation for Eq.12
-		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation):
-				for k in range(self.lenOfLocation-1):
-					self.uVarLits[i][j].append(self.newVarID())
-
-	def printUVarLits(self):
-		for i in range(len(self.uVarLits)):
-			for j in range(len(self.uVarLits[i])):
-				print('u^{{{0}}}{1}_[{2}]'.format(i,'v', self.uVarList[i][j]))
-				print(self.uVarLits[i][j])
-
-	# MTZ-SEC
-	def genHardClauseForEq8(self):
-		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation):
-				for k in range(self.lenOfLocation):
-					if k != j:
-						litList = self.uVarLits[i][k] + [-1 * l for l in self.uVarLits[i][j]]
-
-						#print("現在最大変数ID:", self.vpool.top) # Show current max varID in vpool
-
-						cnf_obj = CardEnc.atleast(lits = litList, bound = 1 + len(self.uVarLits[i][j]), vpool = self.vpool, encoding = 6)
-						for clause in cnf_obj.clauses:
-							self.cnf.append([-self.xVarList[i][j][k]] + clause, update_vpool=True)
-
-	def genHardClauseForEq9(self):
-		for i in range(self.lenOfRequest):
-			for j in range(self.lenOfVehicle):
-				litList = self.uVarLits[j][self.requestList[i][2]] + [-1 * l for l in self.uVarLits[j][self.requestList[i][3]]]
-
-				#print("Current max varID:", self.vpool.top) # Show current max varID in vpool
-
-				cnf_obj = CardEnc.atmost(lits = litList, bound = len(self.uVarLits[j][self.requestList[i][3]]) - 1, vpool = self.vpool, encoding = 6)
-				for clause in cnf_obj.clauses:
-					self.cnf.append([-self.yVarList[i][j]] + clause, update_vpool=True)
 
 	def genHardClauseForEq10(self):
 		for i in range(self.lenOfVehicle):
@@ -165,7 +155,7 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 						litList += self.hVarLits[i][j] + [-1 * l for l in self.hVarLits[i][k]]
 						weightList += tmpListO + tmpListD
 
-						#print("当前最大变量ID:", self.vpool.top) # Show current max varID in vpool
+						#print("Current max varID:", self.vpool.top) # Show current max varID in vpool
 
 						cnf_obj = PBEnc.equals(lits = litList, weights = weightList, bound = equalBound, vpool = self.vpool, encoding = EncType.best)
 						for clause in cnf_obj.clauses:
@@ -175,7 +165,7 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 	def genMaxsatFormular(self):
 		self.genXVarList()
 		self.genYVarList()
-		self.genUVarList()
+		self.genNuVarList()
 		self.genHVarList()
 
 		self.genSoftClause()
@@ -184,13 +174,12 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 		self.genHardClauseForEq5()
 		self.genHardClauseForEq6()
 		self.genHardClauseForEq7()
+		self.genHardClauseForEq8_1()
+		self.genHardClauseForEq8_2()
+		self.genHardClauseForEq9_1()
 		self.genHardClauseForEq11()
 		#self.printHVarLits()
-		self.genHardClauseForEq12()
-		#self.printUVarLits()
-		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.8-10
-		self.genHardClauseForEq8()
-		self.genHardClauseForEq9()
+		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.10
 		self.genHardClauseForEq10()
 
 		print(f"rc2: Generating instance: {self.insName}.wcnf ...")
