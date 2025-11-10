@@ -92,7 +92,7 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 	def resetVarIDforMaxSAT(self):
 		self.varID = self.uVarList[0][0] - 1 # Reset to varID to 1st variable 'u^t_v'
 
-	def genHardClauseForEq11(self): # Literals allocation for Eq.11
+	def genHardClauseForEq11(self): # Literals allocation for Eq.10
 		self.resetVarIDforMaxSAT()
 		for i in range(self.lenOfVehicle):
 			for j in range(self.lenOfLocation):

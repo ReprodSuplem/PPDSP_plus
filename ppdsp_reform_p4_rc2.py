@@ -1,11 +1,11 @@
-# ppdsp_reform_p2_rc2.py
+# ppdsp_reform_p4_rc2.py
 
 from ppdsp_reform_ins_gen import PPDSP_reform
 from pysat.pb import *
 from pysat.formula import *
 from pysat.card import CardEnc
 
-class PPDSP_MaxSAT_p2(PPDSP_reform):
+class PPDSP_MaxSAT_p4(PPDSP_reform):
 	def __init__(self, tsplib, request, vehicle, connect):
 		super().__init__(tsplib, request, vehicle, connect)
 		self.wcnf = WCNF()
@@ -177,10 +177,10 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 		self.genHardClauseForEq8_1()
 		self.genHardClauseForEq8_2()
 		self.genHardClauseForEq9_1()
-		self.genHardClauseForEq11()
+		#self.genHardClauseForEq11()
 		#self.printHVarLits()
-		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.10
-		self.genHardClauseForEq10()
+		#self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.10
+		#self.genHardClauseForEq10()
 
 		print(f"rc2: Generating instance: {self.insName}.wcnf ...")
 		self.wcnf.extend(self.cnf)
@@ -199,16 +199,9 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 			print(f"Solving using {'RC2Stratified' if use_stratified else 'RC2'} ...")
 			with solver_cls(self.wcnf, incr=True, verbose=verbose) as rc2:
 				model = rc2.compute()
-				if model is None:
-					print("Result: UNSAT")
-					print(f"c oracle time: {rc2.oracle_time():.4f}")
-					return None
-
-				filtered_model = [i for i in model if i > 0 and i <= self.getLastYVarID()]
-
-				print(f"Result: SAT, cost = {rc2.cost}")
-				print(f"c oracle time: {rc2.oracle_time():.4f}")
-				print(f"Model: {filtered_model}")
+				#while model is not None:
+				#	filtered_model = [i for i in model if i > 0 and i <= self.getLastYVarID()]
+				self.decodeVarID()
 
 				return filtered_model
 

@@ -223,7 +223,7 @@ def gen_vehic_caps(nOfVehicList: List[int], tspName: str, outDir: str = "."):
 def gen_all_ins_arg(tspPath: str,
 					repetRateList: List[float] = [3, 2.5, 2, 1.5, 1],
 					nOfVehicList: List[int] = [2, 4, 6, 8, 10],
-					connectRatio: float = 1.0,
+					connectRatio: float = 0.2,
 					sizeOfGList: int = 1,
 					skip: float = 0.1,
 					outDir: str = ".",
