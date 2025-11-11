@@ -158,26 +158,92 @@ class PPDSP_reform:
 
 	def buildVarIndexMap(self):
 		self.id2Var = {}
-		# xVar
+		# xVar: x^t_od
 		for i in range(len(self.xVarList)):
 			for j in range(len(self.xVarList[i])):
 				for k in range(len(self.xVarList[i][j])):
 					vid = self.xVarList[i][j][k]
-					if vid is None or vid == 0:
-						continue
-					self.id2Var[vid] = ('x', i, j, k)
-		# yVar
+					if vid:
+						self.id2Var[vid] = ('x', i, j, k)
+		# yVar: y^t_r
 		for i in range(len(self.yVarList)):
 			for j in range(len(self.yVarList[i])):
 				vid = self.yVarList[i][j]
-				if vid is None or vid == 0:
-					continue
-				self.id2Var[vid] = ('y', i, j)
+				if vid:
+					self.id2Var[vid] = ('y', i, j)
 
-	def decodeVarID(self):
-		if not hasattr(self, 'id2Var'):
+	def decodeModel(self, model):
+		if self.id2Var is None:
 			self.buildVarIndexMap()
-		return self.id2Var.get(vid, None)
 
+		vehicle_routes = {v: {'route': [], 'requests': []} for v in range(self.lenOfVehicle)}
+
+		for vid in model:
+			varInfo = self.id2Var.get(vid, None)
+			if varInfo is None:
+				continue
+			if varInfo[0] == 'x':
+				_, t, o, d = varInfo
+				if o != d:
+					vehicle_routes[t]['route'].append((o, d))
+			elif varInfo[0] == 'y':
+				_, r, t = varInfo
+				vehicle_routes[t]['requests'].append(r)
+
+		for v in vehicle_routes:
+			edges = vehicle_routes[v]['route']
+			if not edges:
+				continue
+			next_map = {o: d for o, d in edges}
+			route = []
+			cur = 0 # Start from depot
+			while cur in next_map:
+				nxt = next_map[cur]
+				route.append((cur, nxt))
+				cur = nxt
+				if cur == 0: # Return back to depot
+					break
+			vehicle_routes[v]['route'] = route
+		return vehicle_routes
+
+	def checkOverCapa(self, vehID, route, assigned_reqs):
+		if not route:
+			return False, []
+
+		capacity = self.vehicleList[vehID][0]
+		load = 0
+		violated = False
+		learnt_clause = []
+
+		# Construct pickup/dropoff indices
+		pickup_to_size = {i: self.requestList[i][1] for i in range(self.lenOfRequest)}
+		pickup_node = {i: self.requestList[i][2] for i in range(self.lenOfRequest)}
+		dropoff_node = {i: self.requestList[i][3] for i in range(self.lenOfRequest)}
+
+		# On-board requests
+		onBoard_reqs = set()
+
+		for step_idx, (o, d) in enumerate(route):
+			# 检查到达点的装卸变化（仅考虑此车负责的 requests）
+			for ridx in assigned_reqs:
+				if d == pickup_node[ridx]:
+					load += pickup_to_size[ridx]
+					onBoard_reqs.add(ridx)
+				elif d == dropoff_node[ridx] and ridx in onBoard_reqs:
+					load -= pickup_to_size[ridx]
+					onBoard_reqs.remove(ridx)
+
+			if load > capacity:
+				violated = True
+				# ---- 构造 learnt clause ----
+				# 1️⃣ 当前行驶的路径前缀：负的 xVar
+				path_prefix = route[:step_idx + 1]
+				x_part = [-self.xVarList[vehID][i][j] for i, j in path_prefix]
+				# 2️⃣ 当前导致超载的 active requests：负的 yVar
+				y_part = [-self.yVarList[r][vehID] for r in onBoard_reqs]
+				learnt_clause = x_part + y_part
+				break
+
+		return violated, learnt_clause
 
 __all__ = ["PPDSP_reform"]
