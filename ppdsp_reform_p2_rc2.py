@@ -104,7 +104,7 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 					if k != j:
 						for l in range(self.lenOfLocation): # p: from 0 to |V|-2
 							for m in range(self.lenOfLocation):
-								if m != l: # p': from 0 to |V|-2 and inconsistent with p
+								if m != l - 1: # p': from 0 to |V|-2 and inconsistent with p-1
 									clause = [-self.xVarList[i][j][k], -self.nuVarList[i][k][l], -self.nuVarList[i][j][m]]
 									self.wcnf.append(clause)
 
