@@ -61,9 +61,9 @@ else:
 			print(f"Unknown method: {method}")
 			sys.exit(1)
 		solver.genMaxsatFormular()
-		solver.solve(solver="uwr")
+		#solver.solve(solver="uwr")
 		#solver.solve(solver="rc2")
-		#solver.solve(solver="rc2", use_stratified=True)
+		solver.solve(solver="rc2", use_stratified=True)
 	else:
 		print(f"Unknown mode: {mode}")
 		sys.exit(1)

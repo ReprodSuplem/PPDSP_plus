@@ -1,6 +1,7 @@
 # ppdsp_reform_p4_rc2.py
 
 from ppdsp_reform_ins_gen import PPDSP_reform
+from ppdsp_reform_utils import PPDSP_utils
 from pysat.pb import *
 from pysat.formula import *
 from pysat.card import CardEnc
@@ -141,30 +142,50 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 
 		if solver.lower() == "uwr":
 			print(f"Solving using UWrMaxSat ...")
-			#os.system(f"uwrmaxsat {self.insName}.wcnf")
 			os.system(f"stdbuf -oL uwrmaxsat {self.insName}.wcnf | tee {self.insName}.out")
+			model = []
+			out_file = self.insName + ".out"
+			with open(out_file, 'r') as f:
+				for line in f:
+					line = line.strip()
+					if line.startswith('v '):
+						parts = line.split()[1:] # Ignore 1st char 'v'
+						for lit in parts:
+							if lit == '0':
+								continue
+							model.append(int(lit))
+
+			if not model:
+				print("No model found in UWrMaxSat output.")
+				return None
+
+			filtered_model = PPDSP_utils.extractXYModel(self, model)
+			PPDSP_utils.printVehRoutes(self, filtered_model)
+			PPDSP_utils.evaluateSolution(self, filtered_model)
+
+			return filtered_model
 		else:
 			solver_cls = RC2Stratified if use_stratified else RC2
 			print(f"Solving using {'RC2Stratified' if use_stratified else 'RC2'} ...")
 			with solver_cls(self.wcnf, incr=True, verbose=verbose) as rc2:
 				unviolatedModel = None
 				model = rc2.compute()
-				filtered_model = [i for i in model if i > 0 and i <= self.getLastYVarID()]
-
+				filtered_model = PPDSP_utils.extractXYModel(self, model)
+				
 				while filtered_model is not None:
-					vehRoutes = self.decodeModel(filtered_model)
+					vehRoutes = PPDSP_utils.decodeModel(self, filtered_model)
 					noOverload = True
 
 					for vehID, info in vehRoutes.items():
 						route = info['route']
 						reqs = info['requests']
 
-						isOver, learnt_clause = self.checkOverload(vehID, route, reqs)
+						isOver, learnt_clause = PPDSP_utils.checkOverload(self, vehID, route, reqs)
 						if isOver:
 							noOverload = False
 							print(f"[Overload Detected] Vehicle {vehID} exceeded capacity.")
 							print(f"  Route prefix: {route}")
-							print(f"  Active requests caused overload: {reqs}")
+							print(f"  On-board requests caused overload: {reqs}")
 							print(f"  Learnt clause: {learnt_clause}")
 							rc2.add_clause(learnt_clause)
 						else:
@@ -175,18 +196,17 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 						break
 					else:
 						model = rc2.compute()
-						filtered_model = (
-							[i for i in model if i > 0 and i <= self.getLastYVarID()]
-							if model else None
-						)
+						filtered_model = PPDSP_utils.extractXYModel(self, model) if model else None
 
 				if unviolatedModel is None:
 					print("Result: UNSAT")
 				else:
-					print(f"Result: SAT, cost = {rc2.cost}")
-					print(f"Model: {[i for i in model if i > 0 and i <= self.getLastNuVarID()]}")
+					PPDSP_utils.printVehRoutes(self, unviolatedModel)
+					PPDSP_utils.evaluateSolution(self, unviolatedModel)
 
 				print(f"c oracle time: {rc2.oracle_time():.4f}")
+				print(f"Model: {unviolatedModel}")
+				
 				return unviolatedModel
 
 

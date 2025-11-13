@@ -1,6 +1,7 @@
 # ppdsp_reform_p1_cplex.py
 
 from ppdsp_reform_ins_gen import PPDSP_reform
+from ppdsp_reform_utils import PPDSP_utils
 import cplex
 from cplex import SparsePair
 
@@ -227,6 +228,12 @@ class PPDSP_MIP(PPDSP_reform):
 		opt = self.cpx.solution.get_objective_value()
 		varValues = self.cpx.solution.get_values()
 		varNames = self.cpx.variables.get_names()
-		filtered_model = [varNames[i] for i, val in enumerate(varValues) if val > 1e-6]
+
+		raw_model = [varNames[i] for i, val in enumerate(varValues) if val > 1e-6]
+		filtered_model = PPDSP_utils.convert_cplex_model(raw_model)
+
 		print(f"Result: OPTIMAL, cost = {opt}")
 		print(f"Model: {filtered_model}")
+		
+		PPDSP_utils.printVehRoutes(self, filtered_model)
+		PPDSP_utils.evaluateSolution(self, filtered_model)

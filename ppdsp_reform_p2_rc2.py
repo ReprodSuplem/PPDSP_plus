@@ -1,6 +1,7 @@
 # ppdsp_reform_p2_rc2.py
 
 from ppdsp_reform_ins_gen import PPDSP_reform
+from ppdsp_reform_utils import PPDSP_utils
 from pysat.pb import *
 from pysat.formula import *
 from pysat.card import CardEnc
@@ -192,8 +193,28 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 
 		if solver.lower() == "uwr":
 			print(f"Solving using UWrMaxSat ...")
-			#os.system(f"uwrmaxsat {self.insName}.wcnf")
 			os.system(f"stdbuf -oL uwrmaxsat {self.insName}.wcnf | tee {self.insName}.out")
+			model = []
+			out_file = self.insName + ".out"
+			with open(out_file, 'r') as f:
+				for line in f:
+					line = line.strip()
+					if line.startswith('v '):
+						parts = line.split()[1:] # Ignore 1st char 'v'
+						for lit in parts:
+							if lit == '0':
+								continue
+							model.append(int(lit))
+
+			if not model:
+				print("No model found in UWrMaxSat output.")
+				return None
+
+			filtered_model = PPDSP_utils.extractXYModel(self, model)
+			PPDSP_utils.printVehRoutes(self, filtered_model)
+			PPDSP_utils.evaluateSolution(self, filtered_model)
+
+			return filtered_model
 		else:
 			solver_cls = RC2Stratified if use_stratified else RC2
 			print(f"Solving using {'RC2Stratified' if use_stratified else 'RC2'} ...")
@@ -204,9 +225,10 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 					print(f"c oracle time: {rc2.oracle_time():.4f}")
 					return None
 
-				filtered_model = [i for i in model if i > 0 and i <= self.getLastYVarID()]
+				filtered_model = PPDSP_utils.extractXYModel(self, model)
+				PPDSP_utils.printVehRoutes(self, filtered_model)
+				PPDSP_utils.evaluateSolution(self, filtered_model)
 
-				print(f"Result: SAT, cost = {rc2.cost}")
 				print(f"c oracle time: {rc2.oracle_time():.4f}")
 				print(f"Model: {filtered_model}")
 
