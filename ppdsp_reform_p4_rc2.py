@@ -135,79 +135,44 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		print(f"rc2: Generating instance: {self.insName}.wcnf ...")
 		self.wcnf.extend(self.cnf)
 		self.wcnf.to_file(self.insName + ".wcnf")
+		PPDSP_utils.export_meta_json(self, self.insName + ".meta.json")
 
-	def solve(self, solver="rc2", use_stratified=False, verbose=1):
+	def solve(self, solver="uwr", verbose=1):
 		import os
-		from pysat.examples.rc2 import RC2, RC2Stratified
 
-		if solver.lower() == "uwr":
-			print(f"Solving using UWrMaxSat ...")
-			os.system(f"stdbuf -oL uwrmaxsat {self.insName}.wcnf | tee {self.insName}.out")
-			model = []
-			out_file = self.insName + ".out"
-			with open(out_file, 'r') as f:
-				for line in f:
-					line = line.strip()
-					if line.startswith('v '):
-						parts = line.split()[1:] # Ignore 1st char 'v'
-						for lit in parts:
-							if lit == '0':
-								continue
+		if solver.lower() != "uwr":
+			raise ValueError("Only UWrMaxSAT is supported now. Please set solver='uwr'.")
+
+		wcnf_file = self.insName + ".wcnf"
+		meta_file = self.insName + ".meta.json"
+		out_file  = self.insName + ".out"
+
+		print(f"[PPDSP] Solving using UWrMaxSAT ...")
+
+		# Run uwrmaxsat with meta JSON file
+		cmd = f"stdbuf -oL uwrmaxsat -ppdsp={meta_file} {wcnf_file} | tee {out_file}"
+		print(f"[PPDSP] Running command:\n  {cmd}")
+		os.system(cmd)
+
+		# Parse model
+		model = []
+		with open(out_file, "r") as f:
+			for line in f:
+				line = line.strip()
+				if line.startswith("v "):
+					for lit in line.split()[1:]: # Ignore 1st char 'v'
+						if lit != "0":
 							model.append(int(lit))
 
-			if not model:
-				print("No model found in UWrMaxSat output.")
-				return None
+		if not model:
+			print("[PPDSP] No solution.")
+			return None
 
-			filtered_model = PPDSP_utils.extractXYModel(self, model)
-			PPDSP_utils.printVehRoutes(self, filtered_model)
-			PPDSP_utils.evaluateSolution(self, filtered_model)
+		# Decode XY domain only
+		filtered_model = PPDSP_utils.extractXYModel(self, model)
 
-			return filtered_model
-		else:
-			solver_cls = RC2Stratified if use_stratified else RC2
-			print(f"Solving using {'RC2Stratified' if use_stratified else 'RC2'} ...")
-			with solver_cls(self.wcnf, incr=True, verbose=verbose) as rc2:
-				unviolatedModel = None
-				model = rc2.compute()
-				filtered_model = PPDSP_utils.extractXYModel(self, model)
-				
-				while filtered_model is not None:
-					vehRoutes = PPDSP_utils.decodeModel(self, filtered_model)
-					noOverload = True
+		PPDSP_utils.printVehRoutes(self, filtered_model)
+		PPDSP_utils.evaluateSolution(self, filtered_model)
 
-					for vehID, info in vehRoutes.items():
-						route = info['route']
-						reqs = info['requests']
-
-						isOver, learnt_clause = PPDSP_utils.checkOverload(self, vehID, route, reqs)
-						if isOver:
-							noOverload = False
-							print(f"[Overload Detected] Vehicle {vehID} exceeded capacity.")
-							print(f"  Route prefix: {route}")
-							print(f"  On-board requests caused overload: {reqs}")
-							print(f"  Learnt clause: {learnt_clause}")
-							rc2.add_clause(learnt_clause)
-						else:
-							print(f"[OK] Vehicle {vehID} Route: {route}")
-
-					if noOverload:
-						unviolatedModel = filtered_model
-						break
-					else:
-						model = rc2.compute()
-						filtered_model = PPDSP_utils.extractXYModel(self, model) if model else None
-
-				if unviolatedModel is None:
-					print("Result: UNSAT")
-				else:
-					PPDSP_utils.printVehRoutes(self, unviolatedModel)
-					PPDSP_utils.evaluateSolution(self, unviolatedModel)
-
-				print(f"c oracle time: {rc2.oracle_time():.4f}")
-				print(f"Model: {unviolatedModel}")
-				
-				return unviolatedModel
-
-
+		return filtered_model
 

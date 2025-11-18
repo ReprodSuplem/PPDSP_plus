@@ -198,52 +198,41 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 		self.wcnf.extend(self.cnf)
 		self.wcnf.to_file(self.insName + ".wcnf")
 
-	def solve(self, solver="rc2", use_stratified=False, verbose=1):
+	def solve(self, solver="uwr", verbose=1):
 		import os
-		from pysat.examples.rc2 import RC2, RC2Stratified
 
-		if solver.lower() == "uwr":
-			print(f"Solving using UWrMaxSat ...")
-			os.system(f"stdbuf -oL uwrmaxsat {self.insName}.wcnf | tee {self.insName}.out")
-			model = []
-			out_file = self.insName + ".out"
-			with open(out_file, 'r') as f:
-				for line in f:
-					line = line.strip()
-					if line.startswith('v '):
-						parts = line.split()[1:] # Ignore 1st char 'v'
-						for lit in parts:
-							if lit == '0':
-								continue
+		if solver.lower() != "uwr":
+			raise ValueError("Only UWrMaxSAT is supported now. Please set solver='uwr'.")
+
+		wcnf_file = self.insName + ".wcnf"
+		out_file  = self.insName + ".out"
+
+		print(f"[PPDSP] Solving using UWrMaxSAT ...")
+		cmd = f"stdbuf -oL uwrmaxsat {wcnf} | tee {out}"
+		print(f"[PPDSP] Running command:\n  {cmd}")
+		os.system(cmd)
+
+		# Parse model
+		model = []
+		with open(out_file, "r") as f:
+			for line in f:
+				line = line.strip()
+				if line.startswith("v "):
+					for lit in line.split()[1:]: # Ignore 1st char 'v'
+						if lit != "0":
 							model.append(int(lit))
 
-			if not model:
-				print("No model found in UWrMaxSat output.")
-				return None
+		if not model:
+			print("[PPDSP] No solution.")
+			return None
 
-			filtered_model = PPDSP_utils.extractXYModel(self, model)
-			PPDSP_utils.printVehRoutes(self, filtered_model)
-			PPDSP_utils.evaluateSolution(self, filtered_model)
+		# Decode XY domain only
+		filtered_model = PPDSP_utils.extractXYModel(self, model)
 
-			return filtered_model
-		else:
-			solver_cls = RC2Stratified if use_stratified else RC2
-			print(f"Solving using {'RC2Stratified' if use_stratified else 'RC2'} ...")
-			with solver_cls(self.wcnf, incr=True, verbose=verbose) as rc2:
-				model = rc2.compute()
-				if model is None:
-					print("Result: UNSAT")
-					print(f"c oracle time: {rc2.oracle_time():.4f}")
-					return None
+		PPDSP_utils.printVehRoutes(self, filtered_model)
+		PPDSP_utils.evaluateSolution(self, filtered_model)
 
-				filtered_model = PPDSP_utils.extractXYModel(self, model)
-				PPDSP_utils.printVehRoutes(self, filtered_model)
-				PPDSP_utils.evaluateSolution(self, filtered_model)
-
-				print(f"c oracle time: {rc2.oracle_time():.4f}")
-				print(f"Model: {filtered_model}")
-
-				return filtered_model
+		return filtered_model
 
 
 

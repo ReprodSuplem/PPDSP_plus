@@ -169,3 +169,33 @@ class PPDSP_utils:
 		print("=================================")
 
 		return profit - cost
+
+	# ----------------------------
+	# Export JSON meta for UWrMaxSAT
+	# ----------------------------
+	@staticmethod
+	def export_meta_json(self, filename):
+		"""
+		Export all necessary PPDSP meta information into a JSON file
+		so that the modified UWrMaxSAT solver can decode x/y variables
+		and check capacity constraints lazily.
+
+		The JSON format matches loadPPDSPInstance() in C++.
+		"""
+		import json
+
+		data = {
+			"lenOfVehicle":  self.lenOfVehicle,
+			"lenOfRequest":  self.lenOfRequest,
+			"lenOfLocation": self.lenOfLocation,
+			"xVarList":      self.xVarList,
+			"yVarList":      self.yVarList,
+			"requestList":   self.requestList,
+			"vehicleList":   self.vehicleList
+		}
+
+		with open(filename, "w") as f:
+			json.dump(data, f, indent=2)
+
+		print(f"[PPDSP] meta JSON exported to {filename}")
+
