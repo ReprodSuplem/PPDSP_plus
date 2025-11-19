@@ -135,7 +135,7 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		print(f"rc2: Generating instance: {self.insName}.wcnf ...")
 		self.wcnf.extend(self.cnf)
 		self.wcnf.to_file(self.insName + ".wcnf")
-		PPDSP_utils.export_meta_json(self, self.insName + ".meta.json")
+		PPDSP_utils.export_meta(self, self.insName + ".meta")
 
 	def solve(self, solver="uwr", verbose=1):
 		import os
@@ -144,13 +144,14 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 			raise ValueError("Only UWrMaxSAT is supported now. Please set solver='uwr'.")
 
 		wcnf_file = self.insName + ".wcnf"
-		meta_file = self.insName + ".meta.json"
+		lastY = self.getLastYVarID()
+		meta_file = self.insName + ".meta"
 		out_file  = self.insName + ".out"
 
 		print(f"[PPDSP] Solving using UWrMaxSAT ...")
 
-		# Run uwrmaxsat with meta JSON file
-		cmd = f"stdbuf -oL uwrmaxsat -ppdsp={meta_file} {wcnf_file} | tee {out_file}"
+		# Run uwrmaxsat with meta file
+		cmd = f"stdbuf -oL uwrmaxsat -ppdsp-lastY={lastY} -ppdsp={meta_file} {wcnf_file} | tee {out_file}"
 		print(f"[PPDSP] Running command:\n  {cmd}")
 		os.system(cmd)
 

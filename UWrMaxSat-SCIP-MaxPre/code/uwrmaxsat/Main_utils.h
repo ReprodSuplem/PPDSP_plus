@@ -54,6 +54,9 @@ extern double opt_scip_delay;
 
 extern MsSolver *pb_solver;
 
+extern const char* opt_ppdsp_meta; // PPDSP meta file
+extern int opt_ppdsp_lastY; // Last y variable ID in PPDSP
+
 void reportf(const char* format, ...);
 void SIGINT_handler(int /*signum*/);
 void SIGTERM_handler(int signum);

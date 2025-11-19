@@ -205,10 +205,11 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 			raise ValueError("Only UWrMaxSAT is supported now. Please set solver='uwr'.")
 
 		wcnf_file = self.insName + ".wcnf"
+		lastY = self.getLastYVarID()
 		out_file  = self.insName + ".out"
 
 		print(f"[PPDSP] Solving using UWrMaxSAT ...")
-		cmd = f"stdbuf -oL uwrmaxsat {wcnf} | tee {out}"
+		cmd = f"stdbuf -oL uwrmaxsat -ppdsp-lastY={lastY} {wcnf_file} | tee {out_file}"
 		print(f"[PPDSP] Running command:\n  {cmd}")
 		os.system(cmd)
 

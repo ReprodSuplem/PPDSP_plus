@@ -133,10 +133,21 @@ class PPDSP_utils:
 	@staticmethod
 	def printVehRoutes(self, filtered_model):
 		vehRoutes = PPDSP_utils.decodeModel(self, filtered_model)
+		depot = self.lenOfLocation
 		for vehID, info in vehRoutes.items():
 			route = info['route']
 			reqs  = info['requests']
-			print(f"Vehicle {vehID} route: {route}, requests: {reqs}")
+			if not route:
+				# No route → only depot
+				print(f"Vehicle {vehID}: d, (requests = {reqs})")
+				continue
+			# Convert route to a node sequence directly
+			node_seq = [route[0][0]] + [d for (_, d) in route]
+			# Replace depot index with 'd'
+			node_seq_str = ["d" if n == depot else str(n) for n in node_seq]
+			# Pretty print
+			pretty_route = " → ".join(node_seq_str)
+			print(f"Vehicle {vehID}: {pretty_route}, (requests = {reqs})")
 
 	# ----------------------------
 	# Evaluate profit - cost
@@ -171,31 +182,46 @@ class PPDSP_utils:
 		return profit - cost
 
 	# ----------------------------
-	# Export JSON meta for UWrMaxSAT
+	# Export meta file for UWrMaxSAT
 	# ----------------------------
 	@staticmethod
-	def export_meta_json(self, filename):
+	def export_meta(self, filename):
 		"""
-		Export all necessary PPDSP meta information into a JSON file
+		Export all necessary PPDSP meta information into a text file
 		so that the modified UWrMaxSAT solver can decode x/y variables
 		and check capacity constraints lazily.
 
-		The JSON format matches loadPPDSPInstance() in C++.
+		The text format matches loadPPDSPInstance() in C++.
 		"""
-		import json
-
-		data = {
-			"lenOfVehicle":  self.lenOfVehicle,
-			"lenOfRequest":  self.lenOfRequest,
-			"lenOfLocation": self.lenOfLocation,
-			"xVarList":      self.xVarList,
-			"yVarList":      self.yVarList,
-			"requestList":   self.requestList,
-			"vehicleList":   self.vehicleList
-		}
-
 		with open(filename, "w") as f:
-			json.dump(data, f, indent=2)
+			f.write(f"{self.lenOfVehicle} {self.lenOfRequest} {self.lenOfLocation}\n")
 
-		print(f"[PPDSP] meta JSON exported to {filename}")
+			# xVarList
+			f.write("# xVarList\n")
+			for t in range(self.lenOfVehicle):
+				for o in range(len(self.xVarList[t])):
+					for d in range(len(self.xVarList[t][o])):
+						vid = self.xVarList[t][o][d]
+						f.write(f"{t} {o} {d} {vid}\n")
+
+			# yVarList
+			f.write("# yVarList\n")
+			for r in range(self.lenOfRequest):
+				for t in range(self.lenOfVehicle):
+					vid = self.yVarList[r][t]
+					f.write(f"{r} {t} {vid}\n")
+
+			# requestList
+			f.write("# requestList\n")
+			for r in range(self.lenOfRequest):
+				w, q, pk, dp = self.requestList[r]
+				f.write(f"{r} {w} {q} {pk} {dp}\n")
+
+			# vehicleList
+			f.write("# vehicleList\n")
+			for t in range(self.lenOfVehicle):
+				cap, cost = self.vehicleList[t]
+				f.write(f"{t} {cap} {cost}\n")
+
+			print(f"[PPDSP] meta txt exported to {filename}")
 

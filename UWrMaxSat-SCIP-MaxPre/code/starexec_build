@@ -3,7 +3,8 @@
 cd code
 
 cd cominisatps
-rm core simp mtl utils && ln -s minisat/core minisat/simp minisat/mtl minisat/utils .
+rm -f core simp mtl utils
+ln -s minisat/core minisat/simp minisat/mtl minisat/utils .
 make clean lr
 cd ..
 
@@ -11,19 +12,31 @@ cd maxpre
 make clean lib
 cd ..
 
+rm -rf scipoptsuite-8.1.0
+
 tar zxf scipoptsuite-8.1.0.tgz
 cd scipoptsuite-8.1.0
+
+rm -rf build
+
 mkdir build && cd build
 cmake -DNO_EXTERNAL_CODE=on -DSOPLEX=on -DTPI=tny -DSHARED=off ..
 cmake --build . --config Release --target libscip libsoplex-pic
 cd ../..
 
 cd uwrmaxsat
-make distclean
+
+rm -rf build
+
+make distclean     2>/dev/null || true
 make config
 make r
+
 cp -p build/release/bin/uwrmaxsat ../../bin/
 rm -rf build
 
 cd ../..
+
 rm -rf code/scipoptsuite-8.0.0
+
+cp bin/uwrmaxsat /usr/local/bin/uwrmaxsat

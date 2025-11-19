@@ -21,9 +21,13 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <iostream>
+using namespace std;
+
 #include "System.h"
 #include "Sort.h"
 #include "Debug.h"
+#include "PPDSP_utils.h"
 
 #ifdef USE_SCIP
 #include <atomic>
@@ -207,7 +211,7 @@ static void opt_stratification(vec<weight_t>& sorted_assump_Cs, vec<Pair<Int, bo
 {
     assert(sorted_assump_Cs.size() == sum_sorted_soft_cls.size());
 
-    int m = max(1, sum_sorted_soft_cls.size() - 10);
+    int m = std::max(1, sum_sorted_soft_cls.size() - 10);
     if (m < 10) m = 1;
     for (int i = sum_sorted_soft_cls.size() - 1; i >= m; i--)
         if (sorted_assump_Cs[i] > sorted_assump_Cs[i-1] + 1 || 
@@ -228,7 +232,7 @@ static weight_t do_stratification(MsSolver& S, vec<weight_t>& sorted_assump_Cs, 
     weight_t  max_assump_Cs = 0;
     while (sorted_assump_Cs.size() > 0 && sorted_assump_Cs.last() > lower_bound) {
         max_assump_Cs = sorted_assump_Cs.last(); sorted_assump_Cs.pop();
-        weight_t bound = max(lower_bound, max_assump_Cs - max(weight_t(1),max_assump_Cs/8));
+        weight_t bound = std::max(lower_bound, max_assump_Cs - std::max(weight_t(1),max_assump_Cs/8));
         while (sorted_assump_Cs.size() > 0 && sorted_assump_Cs.last() >= bound && !multi_level_opt[sorted_assump_Cs.size()]) 
             max_assump_Cs = sorted_assump_Cs.last(), sorted_assump_Cs.pop(); 
         int start = top_for_strat - 1, in_global_assumps = 0;
@@ -261,13 +265,13 @@ static weight_t do_stratification(MsSolver& S, vec<weight_t>& sorted_assump_Cs, 
             break;
         } else top_for_strat = start;
     }
-    return max(max_assump_Cs, lower_bound);
+    return std::max(max_assump_Cs, lower_bound);
 }
 
 void MsSolver::harden_soft_cls(Minisat::vec<Lit>& assump_ps, vec<Int>& assump_Cs, vec<weight_t>& sorted_assump_Cs, IntLitQueue& delayed_assump, Int& delayed_assump_sum)
 {
     int cnt_unit = 0, cnt_assump = 0, sz = 0;
-    Int UB = (!scip_foundUB ? UB_goalvalue : min(UB_goalvalue, scip_UB)), Ibound = UB - LB_goalvalue, WMAX = Int(WEIGHT_MAX);
+    Int UB = (!scip_foundUB ? UB_goalvalue : std::min(UB_goalvalue, scip_UB)), Ibound = UB - LB_goalvalue, WMAX = Int(WEIGHT_MAX);
     weight_t       wbound = (Ibound >= WMAX ? WEIGHT_MAX : toweight(Ibound));
     weight_t ub_goalvalue = (UB >= WMAX ? WEIGHT_MAX : toweight(UB - fixed_goalval));
     for (int i = top_for_hard - 1; i >= 0 && soft_cls[i].fst > wbound; i--) { // hardening soft clauses with weights > the current goal interval length 
@@ -773,6 +777,58 @@ void MsSolver::maxsat_solve(solve_Command cmd)
                 if (soft_cls[i].snd->size() > 1)
                     model[var(soft_cls[i].snd->last())] = !sign(soft_cls[i].snd->last());
             Int goalvalue = evalGoal(soft_cls, model, soft_unsat) + fixed_goalval;
+
+            // ================== PPDSP lazy capacity cut ==================
+            if (ppdsp_instance != nullptr){
+                // Construct fullModel manually
+                std::vector<int> fullModel;
+                fullModel.reserve(pb_n_vars);
+
+                for (Var x = 0; x < pb_n_vars; x++){
+                    if (model[x]) fullModel.push_back(x+1);
+                }
+                
+                // fullModel : vector<int> from solver
+                std::vector<int> xyModel;
+                PPDSP_utils::extractXYModel(ppdsp_instance, fullModel, xyModel);
+
+                // decode
+                std::vector<std::vector<std::pair<int,int>>> vehRoutes;
+                std::vector<std::vector<int>> vehReqs;
+                PPDSP_utils::decodeModel(ppdsp_instance, xyModel, vehRoutes, vehReqs);
+
+                // check overload for all vehicles
+                bool violated = false;
+
+                for (int t=0; t < ppdsp_instance->lenOfVehicle; t++){
+                    Minisat::vec<Minisat::Lit> clause;
+
+                    if (PPDSP_utils::checkOverload(
+                            ppdsp_instance,
+                            t,
+                            vehRoutes[t],
+                            vehReqs[t],
+                            clause
+                    )){
+                        violated = true;
+                        // if (opt_verbosity >= 1) cout << "[PPDSP] Vehicle " << t << " overload detected." << endl;
+
+                        sat_solver.addClause(clause);
+                        clause.clear();
+                        break; // go back to SAT loop
+                    }
+                }
+
+                // If overloaded → continue (do not update best model!)
+                if (violated){
+                    continue;    // Go to next SAT solving iteration
+                }
+
+                // Otherwise ~ feasible under capacity
+                // Here you can update best/max model
+            }
+            // ================== PPDSP lazy capacity cut ==================
+
             extern bool opt_satisfiable_out;
             if (goalvalue < best_goalvalue || opt_output_top > 0 && goalvalue == best_goalvalue) {
                 {
@@ -890,8 +946,8 @@ void MsSolver::maxsat_solve(solve_Command cmd)
             } else {
                 assump_lit = assump_lit == lit_Undef || !use_base_assump ?
                     mkLit(sat_solver.newVar(VAR_UPOL, !opt_branch_pbvars)) : assump_lit;
-                Int lb = (scip_foundLB ? max(LB_goalvalue, scip_LB) : LB_goalvalue), 
-                    ub = (scip_foundUB ? min(best_goalvalue, scip_UB) : best_goalvalue);
+                Int lb = (scip_foundLB ? std::max(LB_goalvalue, scip_LB) : LB_goalvalue), 
+                    ub = (scip_foundUB ? std::min(best_goalvalue, scip_UB) : best_goalvalue);
                 try_lessthan = (lb*(100-opt_bin_percent) + ub*(opt_bin_percent))/100;
             }
             Int goal_diff = harden_goalval+fixed_goalval + gbmo_goalval;
@@ -1026,8 +1082,8 @@ void MsSolver::maxsat_solve(solve_Command cmd)
 	} else {
             assump_lit = assump_lit == lit_Undef || !use_base_assump ?
                 mkLit(sat_solver.newVar(VAR_UPOL, !opt_branch_pbvars)) : assump_lit;
-            Int lb = (scip_foundLB ? max(LB_goalvalue, scip_LB) : LB_goalvalue), 
-                ub = (scip_foundUB ? min(best_goalvalue, scip_UB) : best_goalvalue);
+            Int lb = (scip_foundLB ? std::max(LB_goalvalue, scip_LB) : LB_goalvalue), 
+                ub = (scip_foundUB ? std::min(best_goalvalue, scip_UB) : best_goalvalue);
             try_lessthan = (lb*(100-opt_bin_percent) + ub*(opt_bin_percent))/100;
 	}
         if (!addConstr(goal_ps, goal_Cs, try_lessthan - goal_diff, -2, assump_lit))

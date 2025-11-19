@@ -14,9 +14,13 @@ __pycache__/
 *.csv
 *.lp
 *.wcnf
+*.meta
 
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
 ._*
+
+# wsl
+*:Zone.Identifier

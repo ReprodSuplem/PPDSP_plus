@@ -39,6 +39,7 @@ Read a DIMACS file and apply the SAT-solver to it.
 #include "PbParser.h"
 #include "FEnv.h"
 #include "Main_utils.h"
+#include "PPDSP_utils.h" // PPDSP
 
 #ifdef MAXPRE
 #include "preprocessorinterface.hpp"
@@ -58,6 +59,25 @@ int main(int argc, char** argv)
   try {
     setOptions(argc, argv);
     pb_solver = new MsSolver(true, opt_preprocess);
+
+    // ================= PPDSP: read meta file =================
+    if (opt_ppdsp_meta != NULL) {
+        std::cout << "[PPDSP] meta file: " << opt_ppdsp_meta << std::endl;
+
+        ppdsp_instance = new PPDSP_Instance();
+
+        if (!loadPPDSPInstance(opt_ppdsp_meta, *ppdsp_instance)) {
+            std::cerr << "[PPDSP] Failed to load PPDSP meta from "
+                      << opt_ppdsp_meta << std::endl;
+            exit(1);
+        }
+
+        // Mapping varID -> (x/y, t, o/d, r)
+        PPDSP_utils::buildVarIndexMap(ppdsp_instance);
+        std::cout << "[PPDSP] meta loaded OK." << std::endl;
+    }
+    // ================= PPDSP: read meta file end =================
+
     signal(SIGINT , SIGINT_handler);
     signal(SIGTERM, SIGTERM_handler);
 

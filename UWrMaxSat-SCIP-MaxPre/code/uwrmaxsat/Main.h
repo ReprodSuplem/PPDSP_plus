@@ -26,6 +26,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include "Int.h"
 #include "PbSolver.h"
+#include "PPDSP_utils.h"
 
 #ifdef USE_SCIP
 #include <mutex>
@@ -73,6 +74,8 @@ extern bool     opt_maxsat_prepr;
 extern uint64_t opt_unsat_conflicts;
 
 extern bool     opt_reuse_sorters;
+
+extern PPDSP_Instance* ppdsp_instance; // PPDSP instance
 
 // -- files:
 extern char*    opt_input;

@@ -60,6 +60,10 @@ bool     opt_satisfiable_out = true;
 bool     opt_try       = false;     // (hidden option -- if set, then "try" to parse, but don't output "s UNKNOWN" if you fail, instead exit with error code 5)
 int      opt_output_top    = -1;
 
+const char* opt_ppdsp_meta = NULL; // PPDSP meta file
+PPDSP_Instance* ppdsp_instance = NULL; // PPDSP instance
+int opt_ppdsp_lastY = -1; // Last y variable ID in PPDSP
+
 bool     opt_preprocess    = true;
 ConvertT opt_convert       = ct_Undef;
 ConvertT opt_convert_goal  = ct_Undef;
@@ -220,10 +224,13 @@ void outputResult(const PbSolver& S, bool optimum)
                 for (int i = 0; i < S.declared_n_vars; i++)
                     putchar(S.best_model[i]? '1' : '0');
             } else {
+                int lastY = opt_ppdsp_lastY; // Last y variable ID in PPDSP
                 printf("v");
-                for (int i = 0; i < S.best_model.size(); i++)
-                    if (S.index2name[i][0] != '#')
-                        printf(" %s%s", S.best_model[i]?"":"-", S.index2name[i]);
+                for (int i = 0; i < S.best_model.size(); i++){
+                    int varID = i + 1;
+                    if (varID > lastY) continue;
+                    if (S.best_model[i]) printf(" %d", varID);
+                }
             }
         }
         printf("\n");
@@ -535,6 +542,9 @@ static void parseOptions(int argc, char** argv, bool check_files)
             else if (strncmp(arg, "-unsat-cpu=",  11) == 0) opt_unsat_cpu  = atoi(arg+11), 
                                                             opt_unsat_conflicts = opt_unsat_cpu * 100;
             //(end)
+
+            else if (strncmp(arg, "-ppdsp=", strlen("-ppdsp=")) == 0) opt_ppdsp_meta = arg + strlen("-ppdsp="); // PPDSP meta file
+            else if (strncmp(arg, "-ppdsp-lastY=", strlen("-ppdsp-lastY=")) == 0) opt_ppdsp_lastY = atoi(arg + strlen("-ppdsp-lastY=")); // Last y variable ID in PPDSP
 
             else if (oneof(arg, "1,first"   )) opt_command = cmd_FirstSolution;
             else if (oneof(arg, "A,all"     )) opt_command = cmd_AllSolutions;
