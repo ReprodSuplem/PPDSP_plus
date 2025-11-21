@@ -137,51 +137,31 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		self.wcnf.to_file(self.insName + ".wcnf")
 		PPDSP_utils.export_meta(self, self.insName + ".meta")
 
-	def solve(self, solver="uwr", verbose=1):
-		import time
-		import subprocess
-
-		if solver.lower() != "uwr":
-			raise ValueError("Only UWrMaxSAT is supported now. Please set solver='uwr'.")
-
+	def solve(self, verbose=1):
 		wcnf_file = self.insName + ".wcnf"
 		lastY = self.getLastYVarID()
 		meta_file = self.insName + ".meta"
 		log_file  = wcnf_file + ".out"
 
 		# Run uwrmaxsat with meta file
-		cmd = [
-			"uwrmaxsat",
-			f"-ppdsp-lastY={lastY}",
-			f"-ppdsp={meta_file}",
-			wcnf_file
-		]
-		start_time = time.time()
-		proc = subprocess.Popen(
-			cmd,
-			stdout=subprocess.PIPE,
-			stderr=subprocess.PIPE,
-			text=True
-		)
-		stdout, stderr = proc.communicate()
-		elapsed = time.time() - start_time
+		cmd = f"stdbuf -oL uwrmaxsat -ppdsp-lastY={lastY} -ppdsp={meta_file} {wcnf_file} | tee {log_file}"
+		print(f"[UWrMaxSAT] Running command:\n  {cmd}")
+		os.system(cmd)
 
 		# Parse model
 		model = []
-		for line in stdout.splitlines():
-			line = line.strip()
-			print(line)
-			if line.startswith("v "):
-				for lit in line.split()[1:]: # Ignore 1st char 'v'
-					if lit != "0":
-						model.append(int(lit))
-
+		with open(log_file, "r") as f:
+			for line in f:
+				line = line.strip()
+				if line.startswith("v "):
+					for lit in line.split()[1:]: # Ignore 1st char 'v'
+						if lit != "0":
+							model.append(int(lit))
+			
 		if not model:
+			with open(log_file, "a") as f:
+				f.write("\n[UWrMaxSAT] No solution.\n")
 			print("[UWrMaxSAT] No solution.")
-			print(f"[UWrMaxSAT] Runtime: {elapsed:.3f} sec")
-			with open(log_file, "w") as f:
-				f.write("[UWrMaxSAT] No solution.\n")
-				f.write(f"[UWrMaxSAT] Runtime: {elapsed:.3f} sec\n")
 			return None
 
 		# Decode XY domain only
@@ -190,16 +170,8 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		PPDSP_utils.printVehRoutes(self, filtered_model)
 		obj_val = PPDSP_utils.evaluateSolution(self, filtered_model)
 
-		with open(log_file, "w") as f:
-			def log(msg):
-				print(msg)
-				f.write(msg + "\n")
-
-			log(f"[UWrMaxSAT] OBJ: {obj_val}")
-			log(f"[UWrMaxSAT] Runtime: {elapsed:.3f} sec")
-
-			log("===== RAW XY MODEL =====")
-			log(" ".join(str(x) for x in filtered_model))
+		with open(log_file, "a") as f:
+			f.write(f"[UWrMaxSAT] OBJ: {obj_val}")
 
 		return filtered_model
 

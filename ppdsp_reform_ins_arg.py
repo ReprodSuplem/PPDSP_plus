@@ -166,7 +166,7 @@ def gen_request_list(coords: List[Tuple[float, float]], repetRate: float, seed: 
 		lowerVol = 1
 		upperVol = 2 * avgVol - lowerVol
 		tmpRandVol = my_round_int(random.uniform(lowerVol, upperVol))
-		profit = my_round_int(2 * avgDistance * tmpRandVol / avgVol)
+		profit = my_round_int(3 * avgDistance * tmpRandVol / avgVol)
 		size = tmpRandVol
 		pickup = sortedPairList[i][0]
 		dropoff = sortedPairList[i][1]
@@ -223,7 +223,7 @@ def gen_vehic_caps(nOfVehicList: List[int], tspName: str, outDir: str = "."):
 def gen_all_ins_arg(tspPath: str,
 					repetRateList: List[float] = [3, 2.5, 2, 1.5, 1],
 					nOfVehicList: List[int] = [2, 4, 6, 8, 10],
-					connectRatio: float = 0.1,
+					connectRatio: float = 1,
 					sizeOfGList: int = 1,
 					skip: float = 0.1,
 					outDir: str = ".",
