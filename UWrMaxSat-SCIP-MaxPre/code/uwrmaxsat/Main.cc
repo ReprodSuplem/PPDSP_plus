@@ -62,19 +62,19 @@ int main(int argc, char** argv)
 
     // ================= PPDSP: read meta file =================
     if (opt_ppdsp_meta != NULL) {
-        std::cout << "[PPDSP] meta file: " << opt_ppdsp_meta << std::endl;
+        std::cout << "[UWrMaxSAT] meta file: " << opt_ppdsp_meta << std::endl;
 
         ppdsp_instance = new PPDSP_Instance();
 
         if (!loadPPDSPInstance(opt_ppdsp_meta, *ppdsp_instance)) {
-            std::cerr << "[PPDSP] Failed to load PPDSP meta from "
+            std::cerr << "[UWrMaxSAT] Failed to load PPDSP meta from "
                       << opt_ppdsp_meta << std::endl;
             exit(1);
         }
 
         // Mapping varID -> (x/y, t, o/d, r)
         PPDSP_utils::buildVarIndexMap(ppdsp_instance);
-        std::cout << "[PPDSP] meta loaded OK." << std::endl;
+        std::cout << "[UWrMaxSAT] meta loaded OK." << std::endl;
     }
     // ================= PPDSP: read meta file end =================
 

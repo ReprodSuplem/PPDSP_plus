@@ -132,13 +132,14 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		self.genHardClauseForEq8_2()
 		self.genHardClauseForEq9_1()
 
-		print(f"rc2: Generating instance: {self.insName}.wcnf ...")
+		print(f"[rc2] Generating instance: {self.insName}.wcnf ...")
 		self.wcnf.extend(self.cnf)
 		self.wcnf.to_file(self.insName + ".wcnf")
 		PPDSP_utils.export_meta(self, self.insName + ".meta")
 
 	def solve(self, solver="uwr", verbose=1):
-		import os
+		import time
+		import subprocess
 
 		if solver.lower() != "uwr":
 			raise ValueError("Only UWrMaxSAT is supported now. Please set solver='uwr'.")
@@ -146,34 +147,59 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		wcnf_file = self.insName + ".wcnf"
 		lastY = self.getLastYVarID()
 		meta_file = self.insName + ".meta"
-		out_file  = self.insName + ".out"
-
-		print(f"[PPDSP] Solving using UWrMaxSAT ...")
+		log_file  = wcnf_file + ".out"
 
 		# Run uwrmaxsat with meta file
-		cmd = f"stdbuf -oL uwrmaxsat -ppdsp-lastY={lastY} -ppdsp={meta_file} {wcnf_file} | tee {out_file}"
-		print(f"[PPDSP] Running command:\n  {cmd}")
-		os.system(cmd)
+		cmd = [
+			"uwrmaxsat",
+			f"-ppdsp-lastY={lastY}",
+			f"-ppdsp={meta_file}",
+			wcnf_file
+		]
+		start_time = time.time()
+		proc = subprocess.Popen(
+			cmd,
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE,
+			text=True
+		)
+		stdout, stderr = proc.communicate()
+		elapsed = time.time() - start_time
 
 		# Parse model
 		model = []
-		with open(out_file, "r") as f:
-			for line in f:
-				line = line.strip()
-				if line.startswith("v "):
-					for lit in line.split()[1:]: # Ignore 1st char 'v'
-						if lit != "0":
-							model.append(int(lit))
+		for line in stdout.splitlines():
+			line = line.strip()
+			print(line)
+			if line.startswith("v "):
+				for lit in line.split()[1:]: # Ignore 1st char 'v'
+					if lit != "0":
+						model.append(int(lit))
 
 		if not model:
-			print("[PPDSP] No solution.")
+			print("[UWrMaxSAT] No solution.")
+			print(f"[UWrMaxSAT] Runtime: {elapsed:.3f} sec")
+			with open(log_file, "w") as f:
+				f.write("[UWrMaxSAT] No solution.\n")
+				f.write(f"[UWrMaxSAT] Runtime: {elapsed:.3f} sec\n")
 			return None
 
 		# Decode XY domain only
 		filtered_model = PPDSP_utils.extractXYModel(self, model)
 
 		PPDSP_utils.printVehRoutes(self, filtered_model)
-		PPDSP_utils.evaluateSolution(self, filtered_model)
+		obj_val = PPDSP_utils.evaluateSolution(self, filtered_model)
+
+		with open(log_file, "w") as f:
+			def log(msg):
+				print(msg)
+				f.write(msg + "\n")
+
+			log(f"[UWrMaxSAT] OBJ: {obj_val}")
+			log(f"[UWrMaxSAT] Runtime: {elapsed:.3f} sec")
+
+			log("===== RAW XY MODEL =====")
+			log(" ".join(str(x) for x in filtered_model))
 
 		return filtered_model
 

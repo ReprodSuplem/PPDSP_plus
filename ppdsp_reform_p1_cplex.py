@@ -224,16 +224,40 @@ class PPDSP_MIP(PPDSP_reform):
 		self.cpx.write(self.insName + ".lp", filetype="lp")
 
 	def solve(self):
-		self.cpx.solve()
-		opt = self.cpx.solution.get_objective_value()
-		varValues = self.cpx.solution.get_values()
-		varNames = self.cpx.variables.get_names()
+		import time
+		start_time = time.time()
 
-		raw_model = [varNames[i] for i, val in enumerate(varValues) if val > 1e-6]
-		filtered_model = PPDSP_utils.convert_cplex_model(raw_model)
-
-		print(f"Result: OPTIMAL, cost = {opt}")
-		print(f"Model: {filtered_model}")
+		log_file = f"{self.insName}.lp.out"
+		with open(log_file, "w") as f:
+			def log(msg):
+				print(msg)
+				f.write(msg + "\n")
+				f.flush()
 		
-		PPDSP_utils.printVehRoutes(self, filtered_model)
-		PPDSP_utils.evaluateSolution(self, filtered_model)
+			self.cpx.solve()
+			elapsed = time.time() - start_time
+
+			status = self.cpx.solution.get_status_string()
+			log(f"[CPLEX] Status: {status}")
+
+			if self.cpx.solution.is_primal_feasible():
+				opt = self.cpx.solution.get_objective_value()
+				varValues = self.cpx.solution.get_values()
+				varNames = self.cpx.variables.get_names()
+
+				raw_model = [varNames[i] for i, val in enumerate(varValues) if val > 1e-6]
+				filtered_model = PPDSP_utils.convert_cplex_model(raw_model)
+
+				log(f"[CPLEX] OPTIMAL OBJ: {opt}")
+				log(f"[CPLEX] Runtime: {elapsed:.3f} sec")
+				
+				PPDSP_utils.printVehRoutes(self, filtered_model)
+				PPDSP_utils.evaluateSolution(self, filtered_model)
+				log("===== RAW XY MODEL =====")
+				log(" ".join(str(v) for v in filtered_model))
+
+				return filtered_model
+			else:
+				log("[CPLEX] No feasible solution.")
+				log(f"[CPLEX] Runtime: {elapsed:.3f} sec")
+				return None

@@ -811,7 +811,7 @@ void MsSolver::maxsat_solve(solve_Command cmd)
                             clause
                     )){
                         violated = true;
-                        // if (opt_verbosity >= 1) cout << "[PPDSP] Vehicle " << t << " overload detected." << endl;
+                        // if (opt_verbosity >= 1) cout << "[UWrMaxSAT] Vehicle " << t << " overload detected." << endl;
 
                         sat_solver.addClause(clause);
                         clause.clear();

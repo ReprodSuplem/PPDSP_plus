@@ -39,4 +39,5 @@ cd ../..
 
 rm -rf code/scipoptsuite-8.0.0
 
-cp bin/uwrmaxsat /usr/local/bin/uwrmaxsat
+sudo cp bin/uwrmaxsat /usr/local/bin/uwrmaxsat
+sudo chmod +x /usr/local/bin/uwrmaxsat

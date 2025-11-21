@@ -4,7 +4,7 @@ import sys
 from ppdsp_reform_ins_arg import gen_all_ins_arg
 from ppdsp_reform_p1_cplex import PPDSP_MIP
 from ppdsp_reform_p1_z3 import PPDSP_SMT2_p1
-#from ppdsp_reform_p2_z3 import PPDSP_SMT2_p2
+from ppdsp_reform_p4_z3 import PPDSP_SMT2_p4
 from ppdsp_reform_p1_rc2 import PPDSP_MaxSAT_p1
 from ppdsp_reform_p2_rc2 import PPDSP_MaxSAT_p2
 from ppdsp_reform_p4_rc2 import PPDSP_MaxSAT_p4
@@ -43,8 +43,8 @@ else:
 	elif mode == "smt2":
 		if method == "p1":
 			solver = PPDSP_SMT2_p1(tsplib, request, vehicle, connect)
-		#elif method == "p2":
-		#	solver = PPDSP_SMT2_p2(tsplib, request, vehicle, connect)
+		elif method == "p4":
+			solver = PPDSP_SMT2_p4(tsplib, request, vehicle, connect)
 		else:
 			print(f"Unknown method: {method}")
 			sys.exit(1)

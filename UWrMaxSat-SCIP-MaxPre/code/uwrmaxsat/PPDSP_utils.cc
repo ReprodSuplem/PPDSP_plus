@@ -177,7 +177,7 @@ bool loadPPDSPInstance(const char* filename, PPDSP_Instance& inst)
 {
     std::ifstream in(filename);
     if (!in.good()) {
-        std::cerr << "[PPDSP] Cannot open meta file: " << filename << std::endl;
+        std::cerr << "[UWrMaxSAT] Cannot open meta file: " << filename << std::endl;
         return false;
     }
 

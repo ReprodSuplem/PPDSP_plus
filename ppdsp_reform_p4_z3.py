@@ -1,15 +1,15 @@
-# ppdsp_reform_p1_z3.py
+# ppdsp_reform_p4_z3.py
 
 from ppdsp_reform_ins_gen import PPDSP_reform
 from ppdsp_reform_utils import PPDSP_utils
 from z3 import *
 
-class PPDSP_SMT2_p1(PPDSP_reform):
+class PPDSP_SMT2_p4(PPDSP_reform):
 	def __init__(self, tsplib, request, vehicle, connect):
 		super().__init__(tsplib, request, vehicle, connect)
 		self.smt2Opt = Optimize()
 		self.optimal = 0
-		self.insName = f"p1_{tsplib}_r{request}v{vehicle}c{connect}"
+		self.insName = f"p4_{tsplib}_r{request}v{vehicle}c{connect}"
 
 	def addXVars(self):
 		self.smt2x = [[[Bool(f"x{self.xVarList[i][j][k]}") for k in range(len(self.xVarList[i][j]))] for j in range(len(self.xVarList[i]))] for i in range(len(self.xVarList))]
@@ -33,7 +33,8 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 			for j in range(1+self.lenOfLocation):
 				for k in range(1+self.lenOfLocation):
 					cost.append(self.my_round_int(self.vehicleList[i][1] * self.locaList[j][k]) * If(self.smt2x[i][j][k], 1, 0))
-		self.optimal = self.smt2Opt.maximize(Sum(profit) - Sum(cost))
+		self.obj = Int("obj")
+		self.smt2Opt.add(self.obj == Sum(profit) - Sum(cost))
 		#print(self.smt2Opt.objectives())
 
 	def smt2Eq3(self):
@@ -139,25 +140,6 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 				else:
 					raise ValueError("mode must be 2 (implication), or 3 (CNF)")
 
-	def smt2Eq10(self):
-		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation): # j is 'o'
-				for k in range(self.lenOfLocation): # k is 'd'
-					if k == j:
-						continue
-					Gamma = 0
-					for l in range(self.lenOfRequest):
-						if self.requestList[l][2] == k:
-							Gamma += self.requestList[l][1]
-						elif self.requestList[l][3] == k:
-							Gamma -= self.requestList[l][1]
-					self.smt2Opt.add(Implies(self.smt2x[i][j][k], self.smt2h[i][k] == self.smt2h[i][j] + Gamma))
-
-	def smt2Eq11(self):
-		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation):
-				self.smt2Opt.add(self.smt2h[i][j] <= int(self.vehicleList[i][0]))
-
 	def smt2Eq12(self):
 		for i in range(self.lenOfVehicle):
 			for j in range(self.lenOfLocation):
@@ -186,42 +168,75 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 		# Try to switch between mode 2 (implication), or 3 (CNF) in Eq.8 and Eq.9
 		self.smt2Eq8(mode=2)
 		self.smt2Eq9(mode=2)
-		self.smt2Eq10()
-		self.smt2Eq11()
 		self.smt2Eq12()
 
 	def solve(self):
 		import time
 		start_time = time.time()
 
-		print(f"z3: solving instance: {self.insName} ...")
+		print(f"[Z3] solving instance: {self.insName} ...")
 		PPDSP_utils.buildVarIndexMap(self)
 
 		opt = self.smt2Opt
 		log_file = f"{self.insName}.smt2.out"
+
+		best_val = None
+		best_model_xy = None
 		with open(log_file, "w") as f:
 			def log(msg):
 				print(msg)
 				f.write(msg + "\n")
 				f.flush()
 
-			if opt.check() != sat:
-				elapsed = time.time() - start_time
-				log("[Z3] UNSAT.")
-				log(f"[Z3] Runtime: {elapsed:.3f} sec")
-				return None
+			while True:
+				res = opt.check()
+				if res != sat:
+					elapsed = time.time() - start_time
+					if best_model_xy is None:
+						log("[Z3] UNSAT.")
+						log(f"[Z3] Runtime: {elapsed:.3f} sec")
+						return None
 
-			model = opt.model()
-			filtered_model = PPDSP_utils.extractXYModel_z3(self, model)
-			
-			log("[Z3] Optimal model found.")
-			log(f"[Z3] Runtime: {elapsed:.3f} sec")
-			
-			PPDSP_utils.printVehRoutes(self, filtered_model)
-			PPDSP_utils.evaluateSolution(self, filtered_model)
-			log("===== RAW XY MODEL =====")
-			log(" ".join(str(v) for v in filtered_model))
+					log(f"[Z3] Optimal model found, OBJ: {best_val}")
+					log(f"[Z3] Runtime: {elapsed:.3f} sec")
+					
+					PPDSP_utils.printVehRoutes(self, best_model_xy)
+					PPDSP_utils.evaluateSolution(self, best_model_xy)
+					log("===== RAW XY MODEL =====")
+					log(" ".join(str(v) for v in best_model_xy))
+					return best_model_xy
 
-			return filtered_model
+				model = opt.model()
+				filtered_model = PPDSP_utils.extractXYModel_z3(self, model)
+				decoded = PPDSP_utils.decodeModel(self, filtered_model)
+				veh_routes = []
+				veh_reqs   = []
+				for v in range(self.lenOfVehicle):
+					veh_routes.append(decoded[v]['route'])
+					veh_reqs.append(decoded[v]['requests'])
+
+				violated_any = False
+				for t in range(self.lenOfVehicle):
+					violated, learnt_clause = PPDSP_utils.checkOverload(
+						self,
+						t,
+						veh_routes[t],
+						veh_reqs[t]
+					)
+					if violated:
+						violated_any = True
+						z3_clause = PPDSP_utils.learntClause_z3(self, learnt_clause)
+						log(f"[Z3] Vehicle {t} overload → add lazy cut of size {len(z3_clause)}")
+						opt.add( Or(z3_clause) )
+
+				if violated_any:
+					continue
+
+				obj_val = model.evaluate(self.obj, model_completion=True).as_long()
+				log(f"[Z3] Feasible model found, OBJ: {obj_val}")
+				if best_val is None or obj_val > best_val:
+					best_val = obj_val
+					best_model_xy = list(filtered_model)
+					opt.add(self.obj > best_val)
 
 

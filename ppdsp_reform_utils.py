@@ -1,5 +1,7 @@
 # ppdsp_reform_utils.py
 
+from z3 import is_true
+
 class PPDSP_utils:
 
 	# ----------------------------
@@ -44,6 +46,27 @@ class PPDSP_utils:
 	@staticmethod
 	def extractXYModel(self, model):
 		return [i for i in model if 0 < i <= self.getLastYVarID()]
+
+	@staticmethod
+	def extractXYModel_z3(self, model):
+		if self.id2Var is None:
+			PPDSP_utils.buildVarIndexMap(self)
+		xy_model = []
+		for vid, info in self.id2Var.items():
+			vtype = info[0]
+			if vtype == 'x':
+				_, t, o, d = info
+				z3v = self.smt2x[t][o][d]
+			elif vtype == 'y':
+				_, r, t = info
+				z3v = self.smt2y[r][t]
+			else:
+				continue
+			val = model.evaluate(z3v, model_completion=True)
+			if is_true(val):
+				xy_model.append(vid)
+		xy_model.sort()
+		return xy_model
 
 	# ----------------------------
 	# Decode vehicle routes and assigned requests
@@ -97,14 +120,14 @@ class PPDSP_utils:
 		onboard = set()
 
 		# Setup pickup/dropoff indices
-		req_size    = {i: self.requestList[i][1] for i in range(self.lenOfRequest)}
-		pickup_node = {i: self.requestList[i][2] for i in range(self.lenOfRequest)}
-		drop_node   = {i: self.requestList[i][3] for i in range(self.lenOfRequest)}
+		req_size    = {r: self.requestList[r][1] for r in range(self.lenOfRequest)}
+		pickup_node = {r: self.requestList[r][2] for r in range(self.lenOfRequest)}
+		drop_node   = {r: self.requestList[r][3] for r in range(self.lenOfRequest)}
 
 		violated = False
 		learnt_clause = []
 
-		for step_idx, (o, d) in enumerate(route):
+		for k, (o, d) in enumerate(route):
 			for r in assigned_reqs:
 				if d == pickup_node[r]:
 					load += req_size[r]
@@ -117,15 +140,42 @@ class PPDSP_utils:
 				violated = True
 				# ---- Extract reason negation for clause learning ----
 				yLits = [-self.yVarList[r][vehID] for r in onboard]
+
+				# ---- Build prefix nodes origins (exclude depot) ----
+				prefix_origins = [route[i][0] for i in range(k + 1)]
 				xLits = []
-				for r in assigned_reqs:
-					for o in range(self.lenOfLocation):
-						xLits.append(self.xVarList[vehID][o][self.requestList[r][3]])
-				# Reason: if onboard_reqs overload, then at least one of them
+				for r in onboard:
+					dp = drop_node[r]
+					for p in prefix_origins:
+						if p != depot:
+							xLits.append(self.xVarList[vehID][p][dp])
+
+				# Reason: if onboard_reqs overload, then at least one of them should be dropped earlier
 				learnt_clause = yLits + xLits
 				break
 
 		return violated, learnt_clause
+
+	# ----------------------------
+	# Learnt clause → z3 literals
+	# ----------------------------
+	@staticmethod
+	def learntClause_z3(self, learnt_clause):
+		z3_clause = []
+		for lit in learnt_clause:
+			vid = abs(lit)
+			vtype = self.id2Var[vid][0]
+			if lit > 0:
+				if vtype == 'x':
+					z3_clause.append(Bool(f"x{vid}"))
+				else:
+					z3_clause.append(Bool(f"y{vid}"))
+			else:
+				if vtype == 'x':
+					z3_clause.append(Not(Bool(f"x{vid}")))
+				else:
+					z3_clause.append(Not(Bool(f"y{vid}")))
+		return z3_clause
 
 	# ----------------------------
 	# Print each vehicle's route and request
@@ -223,5 +273,5 @@ class PPDSP_utils:
 				cap, cost = self.vehicleList[t]
 				f.write(f"{t} {cap} {cost}\n")
 
-			print(f"[PPDSP] meta txt exported to {filename}")
+			print(f"[UWrMaxSAT] meta exported to {filename}")
 
