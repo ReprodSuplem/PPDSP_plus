@@ -63,6 +63,7 @@ int      opt_output_top    = -1;
 const char* opt_ppdsp_meta = NULL; // PPDSP meta file
 PPDSP_Instance* ppdsp_instance = NULL; // PPDSP instance
 int opt_ppdsp_lastY = -1; // Last y variable ID in PPDSP
+const char* opt_ppdsp_assume = NULL; // PPDSP assumptions file
 
 bool     opt_preprocess    = true;
 ConvertT opt_convert       = ct_Undef;
@@ -545,6 +546,7 @@ static void parseOptions(int argc, char** argv, bool check_files)
 
             else if (strncmp(arg, "-ppdsp=", strlen("-ppdsp=")) == 0) opt_ppdsp_meta = arg + strlen("-ppdsp="); // PPDSP meta file
             else if (strncmp(arg, "-ppdsp-lastY=", strlen("-ppdsp-lastY=")) == 0) opt_ppdsp_lastY = atoi(arg + strlen("-ppdsp-lastY=")); // Last y variable ID in PPDSP
+            else if (strncmp(arg, "-ppdsp-assume=", strlen("-ppdsp-assume=")) == 0) opt_ppdsp_assume = arg + strlen("-ppdsp-assume="); // PPDSP assumptions file
 
             else if (oneof(arg, "1,first"   )) opt_command = cmd_FirstSolution;
             else if (oneof(arg, "A,all"     )) opt_command = cmd_AllSolutions;

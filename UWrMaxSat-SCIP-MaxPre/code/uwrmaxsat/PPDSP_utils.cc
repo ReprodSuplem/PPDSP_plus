@@ -235,3 +235,33 @@ bool loadPPDSPInstance(const char* filename, PPDSP_Instance& inst)
 
     return true;
 }
+
+bool loadAssumptionLits(const char* filename, Minisat::vec<Minisat::Lit>& out_assumps, int maxVarID)
+{
+    std::ifstream in(filename);
+    if (!in.good()){
+        std::cerr << "[UWrMaxSAT] Cannot open assumption file: " << filename << std::endl;
+        return false;
+    }
+    
+    std::string tok;
+    while (in >> tok){
+        // tok is like 12 or -45
+        int lit = std::stoi(tok);
+        int v = std::abs(lit);
+
+        if (v < 1 || v > maxVarID){
+            std::cerr << "[UWrMaxSAT] WARNING: assumption literal "
+                      << lit << " out of range 1.." << maxVarID << std::endl;
+            continue;
+        }
+
+        Minisat::Lit L = Minisat::mkLit(v-1, lit < 0);
+        out_assumps.push(L);
+    }
+
+    std::cout << "[UWrMaxSAT] Loaded " << out_assumps.size()
+              << " assumption literals from " << filename << std::endl;
+
+    return true;
+}

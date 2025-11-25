@@ -67,4 +67,7 @@ public:
 // Load PPDSP instance meta from text file
 bool loadPPDSPInstance(const char* filename, PPDSP_Instance& inst);
 
+// Load PPDSP assumption literals from text file
+bool loadAssumptionLits(const char* filename, Minisat::vec<Minisat::Lit>& out_assumps, int maxVarID);
+
 #endif

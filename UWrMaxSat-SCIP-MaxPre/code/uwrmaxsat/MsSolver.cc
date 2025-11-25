@@ -343,17 +343,26 @@ static inline int log2(int n) { int i=0; while (n>>=1) i++; return i; }
 
 lbool MsSolver::satSolveLimited(Minisat::vec<Lit> &assump_ps)
 {
-      if (ipamir_used) {
-          for (int i = 0; i < global_assumptions.size(); i++) assump_ps.push(global_assumptions[i]);
-          for (int i = 0; i < harden_assump.size(); i++)      assump_ps.push (harden_assump[i]);
-      }
-      lbool status = sat_solver.solveLimited(assump_ps);
+    // Inject PPDSP assumptions
+    for (int i = 0; i < ppdsp_assumps.size(); i++)
+        assump_ps.push(ppdsp_assumps[i]);
 
-      if (ipamir_used) {
-          if (harden_assump.size() > 0)      assump_ps.shrink(harden_assump.size());
-          if (global_assumptions.size() > 0) assump_ps.shrink(global_assumptions.size());
-      }
-      return status;
+    if (ipamir_used) {
+        for (int i = 0; i < global_assumptions.size(); i++) assump_ps.push(global_assumptions[i]);
+        for (int i = 0; i < harden_assump.size(); i++)      assump_ps.push (harden_assump[i]);
+    }
+    lbool status = sat_solver.solveLimited(assump_ps);
+
+    if (ipamir_used) {
+        if (harden_assump.size() > 0)      assump_ps.shrink(harden_assump.size());
+        if (global_assumptions.size() > 0) assump_ps.shrink(global_assumptions.size());
+    }
+
+    // Remove PPDSP assumptions after solving
+    if (ppdsp_assumps.size() > 0)
+        assump_ps.shrink(ppdsp_assumps.size());
+
+    return status;
 }
 
 void reset_soft_cls(vec<Pair<weight_t,Minisat::vec<Lit>*>> &soft_cls, vec<Pair<weight_t,Minisat::vec<Lit>*>> &fixed_soft_cls, vec<Pair<weight_t, Lit> > &modified_soft_cls, weight_t goal_gcd)
@@ -451,6 +460,26 @@ void MsSolver::maxsat_solve(solve_Command cmd)
         }
         if (opt_verbosity >= 1 && soft_cls.size() == 0) sat_solver.printVarsCls();
         lbool status = satSolveLimited(assump_ps);
+        // ============= ASSUMPTION EARLY STOP (debug) =============
+        if (ppdsp_assumps.size() > 0) {
+            if (status == l_False) {
+                if (!ipamir_used){
+                    printf("s UNSATISFIABLE (under assumptions)\n");
+                }
+                // ==== Print assumption UNSAT core ====
+                const COMinisatPS::vec<COMinisatPS::Lit>& confl = sat_solver.conflict;
+                printf("c ===== CONFLICT CLAUSE =====\nc ");
+                for (int i = 0; i < confl.size(); i++) {
+                    int v = COMinisatPS::var(confl[i]);
+                    int signbit = COMinisatPS::sign(confl[i]);
+                    int litID = (signbit ? -(v + 1) : (v + 1));
+                    printf("%d ", litID);
+                }
+                printf("0\n");
+                exit(0);
+            }
+        }
+        // =========================================================
         best_goalvalue = (status == l_True ? fixed_goalval : Int_MAX);
         if (status == l_True) {
             satisfied = true;

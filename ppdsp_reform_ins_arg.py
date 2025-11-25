@@ -51,11 +51,9 @@ def read_tsplib_coords(tspPath: str) -> Tuple[List[Tuple[float, float]], str]:
 	problem = tsplib95.load(tspPath)
 	nodes = sorted(problem.get_nodes())
 	coords = []
-	# Add all coordainates except depot to coords
-	for i in range(1, len(nodes)):
-		coords.append(problem.node_coords[1 + (i - 1)])
-	# Add depot coordinate at the end of coords
-	coords.append(problem.node_coords[1])
+	# Add all coordainates to coords (depot = the last pair of coordinates)
+	for i in range(1, 1+len(nodes)):
+		coords.append([100 * j for j in problem.node_coords[i]])
 	tspName = tspPath.split('/')[-1].replace('.tsp', '')
 	return coords, tspName
 	

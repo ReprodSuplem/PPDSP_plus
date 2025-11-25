@@ -139,6 +139,8 @@ class MsSolver final : public PbSolver {
     Lit                 max_input_lit;  // IMPAMIR: the maximal value of literals created during reading an instance
     void *              termCallbackState;
     int               (*termCallback)(void *state);
+    
+    Minisat::vec<Minisat::Lit> ppdsp_assumps; // PPDSP interface: assumption literals loaded from .asp file
 
     void ipamir_reset(const vec<Lit>& assumptions) {
         PbSolver::reset();

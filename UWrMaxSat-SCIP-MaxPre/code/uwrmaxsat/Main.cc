@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     setOptions(argc, argv);
     pb_solver = new MsSolver(true, opt_preprocess);
 
-    // ================= PPDSP: read meta file =================
+    // ================= PPDSP: read meta file (.meta) =================
     if (opt_ppdsp_meta != NULL) {
         std::cout << "[UWrMaxSAT] meta file: " << opt_ppdsp_meta << std::endl;
 
@@ -77,6 +77,23 @@ int main(int argc, char** argv)
         std::cout << "[UWrMaxSAT] meta loaded OK." << std::endl;
     }
     // ================= PPDSP: read meta file end =================
+
+    // ================= PPDSP: read assumptions file (.asp) =================
+    if (opt_ppdsp_assume != NULL){
+        Minisat::vec<Minisat::Lit> tmp;
+        int maxVar = (ppdsp_instance != NULL ?
+                    ppdsp_instance->getLastYVarID() :
+                    pb_solver->nVars());
+        if (!loadAssumptionLits(opt_ppdsp_assume, tmp, maxVar)){
+            std::cerr << "[UWrMaxSAT] Failed to load assumptions from "
+                    << opt_ppdsp_assume << std::endl;
+            exit(1);
+        }
+        pb_solver->ppdsp_assumps.clear();
+        for (int i=0; i<tmp.size(); i++)
+            pb_solver->ppdsp_assumps.push(tmp[i]);
+    }
+    // ================= PPDSP assumptions end =================
 
     signal(SIGINT , SIGINT_handler);
     signal(SIGTERM, SIGTERM_handler);

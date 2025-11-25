@@ -56,6 +56,7 @@ extern MsSolver *pb_solver;
 
 extern const char* opt_ppdsp_meta; // PPDSP meta file
 extern int opt_ppdsp_lastY; // Last y variable ID in PPDSP
+extern const char* opt_ppdsp_assume; // PPDSP assumptions file
 
 void reportf(const char* format, ...);
 void SIGINT_handler(int /*signum*/);
