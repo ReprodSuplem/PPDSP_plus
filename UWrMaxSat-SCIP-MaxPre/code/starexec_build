@@ -58,4 +58,8 @@ cd ../..
 mkdir -p ~/local/bin
 cp bin/uwrmaxsat ~/local/bin/uwrmaxsat
 
-echo 'export PATH=~/local/bin:$PATH'
+# Append PATH if not already added
+if ! grep -Fxq 'export PATH=$HOME/local/bin:$PATH' ~/.bashrc; then
+    echo 'export PATH=$HOME/local/bin:$PATH' >> ~/.bashrc
+fi
+source ~/.bashrc
