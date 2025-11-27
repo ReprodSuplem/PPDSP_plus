@@ -61,7 +61,7 @@ else:
 			print(f"Unknown method: {method}")
 			sys.exit(1)
 		solver.genMaxsatFormular()
-		solver.solve()
+		solver.solve(time_limit = 2)
 	else:
 		print(f"Unknown mode: {mode}")
 		sys.exit(1)

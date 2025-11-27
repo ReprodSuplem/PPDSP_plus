@@ -1,7 +1,5 @@
 # ppdsp_reform_utils.py
 
-from z3 import is_true
-
 class PPDSP_utils:
 
 	# ----------------------------
@@ -49,6 +47,8 @@ class PPDSP_utils:
 
 	@staticmethod
 	def extractXYModel_z3(self, model):
+		from z3 import is_true
+		
 		if self.id2Var is None:
 			PPDSP_utils.buildVarIndexMap(self)
 		xy_model = []
@@ -275,3 +275,56 @@ class PPDSP_utils:
 
 			print(f"[UWrMaxSAT] meta exported to {filename}")
 
+	# ----------------------------
+	# Run UWrMaxSAT with real-time stdout logging and write to log file
+	# ----------------------------
+	@staticmethod
+	def run_uwrmaxsat(cmd, log_file, time_limit=None):
+		"""
+		Run UWrMaxSAT with:
+		- real-time stdout echo to terminal
+		- real-time write to log_file
+		- time limit (seconds)
+		- clean kill on timeout
+		"""
+		import subprocess, shlex, time
+
+		print(f"[UWrMaxSAT] Running command:\n  {cmd}")
+
+		with open(log_file, "w", buffering=1) as log_f:
+			proc = subprocess.Popen(
+				shlex.split(cmd),
+				stdout=subprocess.PIPE,
+				stderr=subprocess.STDOUT,
+				text=True,
+				bufsize=1
+			)
+			start_time = time.time()
+			timeout_hit = False
+			try:
+				for line in proc.stdout:
+					print(line, end="")
+					log_f.write(line)
+					log_f.flush()
+					if time_limit is not None and (time.time() - start_time) > time_limit:
+						print(f"\n[UWrMaxSAT] Time limit {time_limit} s reached. Killing process...", flush=True)
+						timeout_hit = True
+						proc.terminate()
+						try:
+							proc.wait(timeout=3)
+						except subprocess.TimeoutExpired:
+							proc.kill()
+						break
+			finally:
+				if proc.stdout:
+					proc.stdout.close()
+				try:
+					proc.wait(timeout=3)
+				except subprocess.TimeoutExpired:
+					proc.kill()
+			if timeout_hit:
+				print(f"[UWrMaxSAT] Process stopped due to time limit. returncode = {proc.returncode}")
+			else:
+				print(f"[UWrMaxSAT] Process finished. returncode = {proc.returncode}")
+
+			return timeout_hit

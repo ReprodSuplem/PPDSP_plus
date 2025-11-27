@@ -1,43 +1,61 @@
 #!/bin/bash
 
+set -e
+
 cd code
 
+# =============================
+# 1. Build COMiniSatPS
+# =============================
 cd cominisatps
 rm -f core simp mtl utils
 ln -s minisat/core minisat/simp minisat/mtl minisat/utils .
 make clean lr
 cd ..
 
+# =============================
+# 2. Build MaxPre
+# =============================
 cd maxpre
 make clean lib
 cd ..
 
+# =============================
+# 3. Build SCIP
+# =============================
 rm -rf scipoptsuite-8.1.0
-
 tar zxf scipoptsuite-8.1.0.tgz
 cd scipoptsuite-8.1.0
 
 rm -rf build
-
 mkdir build && cd build
+
 cmake -DNO_EXTERNAL_CODE=on -DSOPLEX=on -DTPI=tny -DSHARED=off ..
 cmake --build . --config Release --target libscip libsoplex-pic
+
 cd ../..
 
+# =============================
+# 4. Build UWrMaxSAT
+# =============================
 cd uwrmaxsat
 
 rm -rf build
 
-make distclean     2>/dev/null || true
+make distclean 2>/dev/null || true
 make config
-make r
+make r   # <== THIS produces build/release/bin/uwrmaxsat
 
-cp -p build/release/bin/uwrmaxsat ../../bin/
+# Put binary in project local bin/
+cp build/release/bin/uwrmaxsat ../../bin/
+
 rm -rf build
-
 cd ../..
 
-rm -rf code/scipoptsuite-8.0.0
+# =============================
+# 5. Install only in user HOME
+# =============================
+mkdir -p ~/local/bin
+cp bin/uwrmaxsat ~/local/bin/uwrmaxsat
 
-sudo cp bin/uwrmaxsat /usr/local/bin/uwrmaxsat
-sudo chmod +x /usr/local/bin/uwrmaxsat
+echo 'export PATH=~/local/bin:$PATH'

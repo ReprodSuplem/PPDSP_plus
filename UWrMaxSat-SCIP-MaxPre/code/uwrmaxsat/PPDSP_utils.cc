@@ -5,6 +5,9 @@ using namespace std;
 
 #include <fstream>
 
+double PPDSP_start_time = 0;
+int    PPDSP_time_limit = -1;
+
 void PPDSP_utils::buildVarIndexMap(PPDSP_Instance* inst)
 {
     inst->id2Var.clear();
@@ -264,4 +267,14 @@ bool loadAssumptionLits(const char* filename, Minisat::vec<Minisat::Lit>& out_as
               << " assumption literals from " << filename << std::endl;
 
     return true;
+}
+
+void PPDSP_setTimeLimit(int seconds) { PPDSP_time_limit = seconds; }
+
+void PPDSP_startTimer() { PPDSP_start_time = std::clock(); }
+
+bool PPDSP_timeout() {
+    if (PPDSP_time_limit <= 0) return false;
+    double elapsed = (std::clock() - PPDSP_start_time) / CLOCKS_PER_SEC;
+    return elapsed >= PPDSP_time_limit;
 }

@@ -461,6 +461,7 @@ void MsSolver::maxsat_solve(solve_Command cmd)
         if (opt_verbosity >= 1 && soft_cls.size() == 0) sat_solver.printVarsCls();
         lbool status = satSolveLimited(assump_ps);
         // ============= ASSUMPTION EARLY STOP (debug) =============
+        PPDSP_startTimer();
         if (ppdsp_assumps.size() > 0) {
             if (status == l_False) {
                 if (!ipamir_used){
@@ -704,6 +705,10 @@ void MsSolver::maxsat_solve(solve_Command cmd)
     lbool status;
     do { // a loop to process GBMO splitting points
     while (1) {
+      if (PPDSP_timeout()){
+        printf("c [UWrMaxSAT] Timeout reached.\n");
+        break;
+      }
 #ifdef USE_SCIP
       if (scip_solver.must_be_started && cpuTime() >= start_solving_cpu + opt_scip_delay) {
         scip_solver.must_be_started = false;

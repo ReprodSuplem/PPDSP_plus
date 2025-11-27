@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <utility>
 #include "PbSolver.h"
+#include <ctime>
 
 struct VarInfo {
     char type;   // 'x' or 'y'
@@ -69,5 +70,13 @@ bool loadPPDSPInstance(const char* filename, PPDSP_Instance& inst);
 
 // Load PPDSP assumption literals from text file
 bool loadAssumptionLits(const char* filename, Minisat::vec<Minisat::Lit>& out_assumps, int maxVarID);
+
+// Global variables for time management
+extern double PPDSP_start_time;
+extern int    PPDSP_time_limit;
+
+void PPDSP_setTimeLimit(int seconds);
+void PPDSP_startTimer();
+bool PPDSP_timeout();
 
 #endif

@@ -187,14 +187,15 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 		self.wcnf.extend(self.cnf)
 		self.wcnf.to_file(self.insName + ".wcnf")
 
-	def solve(self, verbose=1):
+	def solve(self, verbose=1, time_limit=5):
 		wcnf_file = self.insName + ".wcnf"
 		lastY = self.getLastYVarID()
 		log_file  = wcnf_file + ".out"
 
-		cmd = f"stdbuf -oL uwrmaxsat -ppdsp-lastY={lastY} {wcnf_file} | tee {log_file}"
+		cmd = f"stdbuf -oL uwrmaxsat -ppdsp-time={time_limit} -ppdsp-lastY={lastY} {wcnf_file} | tee {log_file}"
 		print(f"[UWrMaxSAT] Running command:\n  {cmd}")
 		os.system(cmd)
+		# PPDSP_utils.run_uwrmaxsat(cmd, log_file, time_limit)
 
 		# Parse model
 		model = []

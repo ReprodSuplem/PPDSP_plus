@@ -137,7 +137,7 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		self.wcnf.to_file(self.insName + ".wcnf")
 		PPDSP_utils.export_meta(self, self.insName + ".meta")
 
-	def solve(self, verbose=1):
+	def solve(self, verbose=1, time_limit=5):
 		wcnf_file = self.insName + ".wcnf"
 		lastY = self.getLastYVarID()
 		meta_file = self.insName + ".meta"
@@ -145,10 +145,10 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		log_file  = wcnf_file + ".out"
 
 		# Run uwrmaxsat with meta file and assumption file
-		# -ppdsp-assume={assumption_file}
-		cmd = f"stdbuf -oL uwrmaxsat -no-scip -ppdsp-lastY={lastY} -ppdsp={meta_file} {wcnf_file} | tee {log_file}"
+		cmd = f"stdbuf -oL uwrmaxsat -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} -ppdsp={meta_file} -ppdsp-assume={assumption_file} {wcnf_file} | tee {log_file}"
 		print(f"[UWrMaxSAT] Running command:\n  {cmd}")
 		os.system(cmd)
+		# PPDSP_utils.run_uwrmaxsat(cmd, log_file, time_limit)
 
 		# Parse model
 		model = []

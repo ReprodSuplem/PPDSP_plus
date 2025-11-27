@@ -36,6 +36,7 @@ Read a DIMACS file and apply the SAT-solver to it.
 #include "PbParser.h"
 #include "FEnv.h"
 #include "Main_utils.h"
+#include "PPDSP_utils.h"
 
 #ifdef MAXPRE
 #include "preprocessorinterface.hpp"
@@ -547,6 +548,7 @@ static void parseOptions(int argc, char** argv, bool check_files)
             else if (strncmp(arg, "-ppdsp=", strlen("-ppdsp=")) == 0) opt_ppdsp_meta = arg + strlen("-ppdsp="); // PPDSP meta file
             else if (strncmp(arg, "-ppdsp-lastY=", strlen("-ppdsp-lastY=")) == 0) opt_ppdsp_lastY = atoi(arg + strlen("-ppdsp-lastY=")); // Last y variable ID in PPDSP
             else if (strncmp(arg, "-ppdsp-assume=", strlen("-ppdsp-assume=")) == 0) opt_ppdsp_assume = arg + strlen("-ppdsp-assume="); // PPDSP assumptions file
+            else if (strncmp(arg, "-ppdsp-time=", strlen("-ppdsp-time=")) == 0) PPDSP_setTimeLimit(atoi(arg + strlen("-ppdsp-time="))); // PPDSP time limit
 
             else if (oneof(arg, "1,first"   )) opt_command = cmd_FirstSolution;
             else if (oneof(arg, "A,all"     )) opt_command = cmd_AllSolutions;
