@@ -203,7 +203,7 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 		lastY = self.getLastYVarID()
 		log_file  = wcnf_file + ".out"
 
-		cmd = f"stdbuf -oL uwrmaxsat -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} {wcnf_file} | tee {log_file}"
+		cmd = f"stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} {wcnf_file} | tee {log_file}"
 		print(f"[UWrMaxSAT] Running command:\n  {cmd}")
 		os.system(cmd)
 		# PPDSP_utils.run_uwrmaxsat(cmd, log_file, time_limit)

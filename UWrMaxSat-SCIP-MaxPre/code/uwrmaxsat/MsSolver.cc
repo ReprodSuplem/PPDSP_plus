@@ -462,6 +462,7 @@ void MsSolver::maxsat_solve(solve_Command cmd)
         lbool status = satSolveLimited(assump_ps);
         // ============= ASSUMPTION EARLY STOP (debug) =============
         PPDSP_startTimer();
+        printf("c Start timer (tic-tac ...)\nc ");
         if (ppdsp_assumps.size() > 0) {
             if (status == l_False) {
                 if (!ipamir_used){
@@ -802,6 +803,10 @@ void MsSolver::maxsat_solve(solve_Command cmd)
             if (!ipamir_used) reportf("\n");
             sat_solver.addClause_(ban);
         }else{
+            if (PPDSP_timeout()){
+                printf("c [UWrMaxSAT] Timeout reached.\n");
+                break;
+            }
             vec<bool> model;
             Minisat::vec<Lit> soft_unsat;
             for (Var x = 0; x < pb_n_vars; x++)
