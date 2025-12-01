@@ -200,7 +200,7 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 		print(f"[SBC] Added {sbc_count} clauses.")
 
 	def genSmt2Formular(self):
-		print("z3: adding varibles ...")
+		print("[Z3] Adding varibles ...")
 		self.genXVarList()
 		self.genYVarList()
 		self.genUVarList()
@@ -210,7 +210,7 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 		self.addUVars()
 		self.addHVars()
 
-		print("z3: adding constraints ...")
+		print("[Z3] Adding constraints ...")
 		self.smt2Obj()
 		self.smt2Eq3()
 		# Try to switch between mode 1 (arithmetic), 2 (implication), or 3 (CNF) in Eq.4 and Eq.5
@@ -224,11 +224,15 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 		self.smt2Eq12()
 		self.genSymmetryBreaking()
 
-	def solve(self):
+	def solve(self, time_limit=5):
 		import time
+		from z3 import sat, unknown
 		start_time = time.time()
 
-		print(f"[Z3] solving instance: {self.insName} ...")
+		print(f"[Z3] Solving instance: {self.insName} ...")
+		if time_limit is not None:
+			print(f"[Z3] Setting time limit to {time_limit} seconds")
+			self.smt2Opt.set("timeout", time_limit * 1000)
 		PPDSP_utils.buildVarIndexMap(self)
 
 		opt = self.smt2Opt
@@ -243,7 +247,17 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 				f.flush()
 
 			while True:
-				res = opt.check()
+				if time_limit is not None:
+					elapsed_so_far = time.time() - start_time
+					remaining_time = time_limit - elapsed_so_far
+					
+					if remaining_time <= 0:
+						log("[Z3] Time limit exceeded before check.")
+						res = None # Force timeout
+					else:
+						res = PPDSP_utils.solve_z3_with_interrupt(opt, remaining_time)
+				else:
+					res = opt.check()
 				if res != sat:
 					elapsed = time.time() - start_time
 					if best_model_xy is None:

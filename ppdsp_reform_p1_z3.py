@@ -165,7 +165,7 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 				self.smt2Opt.add(self.smt2u[i][j] >= 0)
 
 	def genSmt2Formular(self):
-		print("z3: adding varibles ...")
+		print("[Z3] Adding varibles ...")
 		self.genXVarList()
 		self.genYVarList()
 		self.genUVarList()
@@ -175,7 +175,7 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 		self.addUVars()
 		self.addHVars()
 
-		print("z3: adding constraints ...")
+		print("[Z3] Adding constraints ...")
 		self.smt2Obj()
 		self.smt2Eq3()
 		# Try to switch between mode 1 (arithmetic), 2 (implication), or 3 (CNF) in Eq.4 and Eq.5
@@ -190,11 +190,14 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 		self.smt2Eq11()
 		self.smt2Eq12()
 
-	def solve(self):
+	def solve(self, time_limit=5):
 		import time
 		start_time = time.time()
 
-		print(f"z3: solving instance: {self.insName} ...")
+		print(f"[Z3] Solving instance: {self.insName} ...")
+		if time_limit is not None:
+			print(f"[Z3] Setting time limit to {time_limit} seconds")
+			self.smt2Opt.set("timeout", time_limit * 1000)
 		PPDSP_utils.buildVarIndexMap(self)
 
 		opt = self.smt2Opt

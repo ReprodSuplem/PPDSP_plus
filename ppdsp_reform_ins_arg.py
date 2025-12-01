@@ -164,7 +164,8 @@ def gen_request_list(coords: List[Tuple[float, float]], repetRate: float, seed: 
 		lowerVol = 1
 		upperVol = 2 * avgVol - lowerVol
 		tmpRandVol = my_round_int(random.uniform(lowerVol, upperVol))
-		profit = my_round_int(3 * avgDistance * tmpRandVol / avgVol)
+		rand_factor = random.uniform(0.9, 1.1)
+		profit = my_round_int(3 * avgDistance * tmpRandVol / avgVol * rand_factor)
 		size = tmpRandVol
 		pickup = sortedPairList[i][0]
 		dropoff = sortedPairList[i][1]

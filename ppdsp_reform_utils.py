@@ -347,3 +347,42 @@ class PPDSP_utils:
 				print(f"[UWrMaxSAT] Process finished. returncode = {proc.returncode}")
 
 			return timeout_hit
+
+	# ----------------------------
+	# Z3 Solver with Threaded Interrupt (Hard Timeout)
+	# ----------------------------
+	@staticmethod
+	def solve_z3_with_interrupt(z3_optimizer, time_limit):
+		"""
+		Run Z3 check() with a separate timer thread to force interrupt.
+		This is stronger than z3_optimizer.set("timeout", ...)
+		"""
+		import threading
+		
+		# Define the container to hold the result
+		result_container = {'status': None}
+		
+		def target():
+			result_container['status'] = z3_optimizer.check()
+
+		# Create a thread to run the solver
+		solve_thread = threading.Thread(target=target)
+		solve_thread.start()
+		
+		# Wait for the thread to finish or timeout
+		solve_thread.join(timeout=time_limit)
+		
+		if solve_thread.is_alive():
+			print(f"[Z3] Time limit {time_limit}s reached. Sending interrupt signal...")
+			# Force Z3 to stop
+			z3_optimizer.ctx.interrupt()
+			
+			# Give it a moment to clean up
+			solve_thread.join(timeout=2) 
+			
+			if solve_thread.is_alive():
+				print("[Z3] Warning: Z3 is struggling to stop even after interrupt.")
+			
+			return None # Treat as timeout/unknown
+			
+		return result_container['status']

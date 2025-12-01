@@ -223,9 +223,13 @@ class PPDSP_MIP(PPDSP_reform):
 	def writeLpFile(self):
 		self.cpx.write(self.insName + ".lp", filetype="lp")
 
-	def solve(self):
+	def solve(self, time_limit=5):
 		import time
 		start_time = time.time()
+
+		if time_limit is not None:
+			print(f"[CPLEX] Setting time limit to {time_limit} seconds")
+			self.cpx.parameters.timelimit.set(time_limit)
 
 		log_file = f"{self.insName}.lp.out"
 		with open(log_file, "w") as f:
