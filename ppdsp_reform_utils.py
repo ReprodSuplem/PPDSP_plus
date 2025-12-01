@@ -128,6 +128,7 @@ class PPDSP_utils:
 		learnt_clause = []
 
 		for k, (o, d) in enumerate(route):
+			# Update load status
 			for r in assigned_reqs:
 				if d == pickup_node[r]:
 					load += req_size[r]
@@ -138,19 +139,36 @@ class PPDSP_utils:
 
 			if load > capacity:
 				violated = True
-				# ---- Extract reason negation for clause learning ----
-				yLits = [-self.yVarList[r][vehID] for r in onboard]
 
-				# ---- Build prefix nodes origins (exclude depot) ----
+				# ---- 1. Collect and Sort (Descending by size) ----
+				# Convert set to list for sorting
+				onboard_reqs = list(onboard)
+				# Sort logic: largest request first
+				onboard_reqs.sort(key=lambda r: req_size[r], reverse=True)
+
+				# ---- 2. Greedy Reduction: Find minimal conflict core ----
+				minimal_conflict = []
+				current_subset_load = 0
+				for r in onboard_reqs:
+					current_subset_load += req_size[r]
+					minimal_conflict.append(r)
+					if current_subset_load > capacity:
+						break # Found the minimal set that exceeds capacity
+
+				# ---- 3. Build learnt clause based on Minimal Conflict ----
+				# yLits: Negate Y vars ONLY for the minimal conflict set
+				yLits = [-self.yVarList[r][vehID] for r in minimal_conflict]
+				# xLits: Build prefix nodes origins
 				prefix_origins = [route[i][0] for i in range(k + 1)]
+
 				xLits = []
-				for r in onboard:
+				# Only generate path negation for the minimal conflict set
+				for r in minimal_conflict:
 					dp = drop_node[r]
 					for p in prefix_origins:
-						if p != depot:
-							xLits.append(self.xVarList[vehID][p][dp])
+						xLits.append(self.xVarList[vehID][p][dp])
 
-				# Reason: if onboard_reqs overload, then at least one of them should be dropped earlier
+				# Reason: The minimal subset of onboard requests implies overload on this path
 				learnt_clause = yLits + xLits
 				break
 
@@ -161,6 +179,7 @@ class PPDSP_utils:
 	# ----------------------------
 	@staticmethod
 	def learntClause_z3(self, learnt_clause):
+		from z3 import Bool, Not
 		z3_clause = []
 		for lit in learnt_clause:
 			vid = abs(lit)

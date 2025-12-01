@@ -117,6 +117,52 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 						clause = [-self.yVarList[i][j], -self.nuVarList[j][self.requestList[i][2]][k], -self.nuVarList[j][self.requestList[i][3]][l]]
 						self.wcnf.append(clause)
 
+	def genSymmetryBreaking(self):
+		"""
+		SBC (Symmetry Breaking Constraints) for Homogeneous Fleet (Auto-Grouping version).
+		1. Groups vehicles by (capacity, cost).
+		2. Applies lexicographic ordering within each group:
+			For group [v1, v2, v3...]:
+				- v1 is 'leader' of v2
+				- v2 is 'leader' of v3
+		Constraint: If vehicle 'follower' uses request r,
+		vehicle 'leader' must have served a request < r.
+		"""
+		# 1. Auto-grouping: find all homogeneous vehicles
+		# Key: (capacity, cost), Value: [vehicle_id_1, vehicle_id_2, ...]
+		groups = {}
+		for t in range(self.lenOfVehicle):
+			# Convert list to tuple for dict key
+			cap = self.vehicleList[t][0]
+			cost = self.vehicleList[t][1]
+			key = (cap, cost)
+			
+			if key not in groups:
+				groups[key] = []
+			groups[key].append(t)
+			
+		# 2. Apply chain constraints within each group of homogeneous vehicles
+		sbc_count = 0
+		for key, veh_ids in groups.items():
+			if len(veh_ids) < 2:
+				continue # Only one vehicle of this type, no SBC needed
+			# print(f"[SBC] Group {key}: vehicles {veh_ids}")
+
+			# Chain constraints: v[0] is leader of v[1], v[1] is leader of v[2], ...
+			for i in range(len(veh_ids) - 1):
+				leader = veh_ids[i]
+				follower = veh_ids[i+1]
+				
+				for r in range(self.lenOfRequest):
+					# y[r][follower] -> (y[0][leader] v ... v y[r-1][leader])
+					clause = [-self.yVarList[r][follower]]
+					for prev_r in range(r):
+						clause.append(self.yVarList[prev_r][leader])
+					
+					self.wcnf.append(clause)
+					sbc_count += 1
+		print(f"[SBC] Added {sbc_count} clauses.")
+
 	def genMaxsatFormular(self):
 		self.genXVarList()
 		self.genYVarList()
@@ -131,6 +177,7 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		self.genHardClauseForEq8_1()
 		self.genHardClauseForEq8_2()
 		self.genHardClauseForEq9_1()
+		self.genSymmetryBreaking()
 
 		print(f"[rc2] Generating instance: {self.insName}.wcnf ...")
 		self.wcnf.extend(self.cnf)
