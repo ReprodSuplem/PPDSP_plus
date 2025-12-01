@@ -1,9 +1,9 @@
 #include "PPDSP_utils.h"
+#include <algorithm>
 #include <iostream>
 #include <cassert>
-using namespace std;
-
 #include <fstream>
+using namespace std;
 
 double PPDSP_start_time = 0;
 int    PPDSP_time_limit = -1;
@@ -147,23 +147,41 @@ bool PPDSP_utils::checkOverload(
                 if (onboard[r])
                     onboard_reqs.push_back(r);
 
-            // 2. Prefix nodes (before or at this step)  --- no depot ---
-            vector<int> prefix_nodes;
-            for (size_t i = 0; i <= k; i++){
-                prefix_nodes.push_back(route[i].first);
+            // 2. Greedy reduction: find minimal unsat core -- sort by size descending --
+            std::sort(onboard_reqs.begin(), onboard_reqs.end(),
+                [&](int a, int b){
+                    return req_size[a] > req_size[b];
+                }
+            );
+
+            // 3. Build minimal conflict set
+            vector<int> minimal_conflict;
+            int current_subset_load = 0;
+            for (int r : onboard_reqs) {
+                current_subset_load += req_size[r];
+                minimal_conflict.push_back(r);
+                if (current_subset_load > capacity) {
+                    break;
+                }
             }
 
-            // 3. Build learnt clause
-            // yLits (negated y-vars)
-            for (int r : onboard_reqs){
+            // 4. Prefix nodes (before or at this step)
+            vector<int> prefix_origins;
+            for (size_t i = 0; i <= k; i++){
+                prefix_origins.push_back(route[i].first);
+            }
+
+            // 5. Build learnt clause
+            // yLits (negated y-vars) for minimal conflict requests
+            for (int r : minimal_conflict){
                 int vid = inst->yVarList[r][vehID];
                 learnt_clause.push(~Minisat::mkLit(vid - 1));
             }
 
             // xLits (only prefix origins → dropNode)
-            for (int r : onboard_reqs){
+            for (int r : minimal_conflict){
                 int dropNode = drop[r];
-                for (int o : prefix_nodes){
+                for (int o : prefix_origins){
                     int vid = inst->xVarList[vehID][o][dropNode];
                     learnt_clause.push(Minisat::mkLit(vid - 1));
                 }
