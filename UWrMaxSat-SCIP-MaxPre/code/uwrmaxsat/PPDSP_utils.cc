@@ -147,7 +147,7 @@ bool PPDSP_utils::checkOverload(
                 if (onboard[r])
                     onboard_reqs.push_back(r);
 
-            // 2. Greedy reduction: find minimal unsat core -- sort by size descending --
+            // 2. Greedy reduction: find minimal conflict core -- sort by size descending --
             std::sort(onboard_reqs.begin(), onboard_reqs.end(),
                 [&](int a, int b){
                     return req_size[a] > req_size[b];
