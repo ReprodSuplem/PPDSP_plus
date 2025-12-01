@@ -38,7 +38,3 @@ UWrMaxSat-SCIP-MaxPre/code/scipoptsuite-*/
 UWrMaxSat-SCIP-MaxPre/code/cominisatps/build/
 UWrMaxSat-SCIP-MaxPre/code/maxpre/build/
 UWrMaxSat-SCIP-MaxPre/code/uwrmaxsat/build/
-
-# uwrmaxsat binary
-UWrMaxSat-SCIP-MaxPre/bin/
-uwrmaxsat
