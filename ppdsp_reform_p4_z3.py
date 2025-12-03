@@ -338,14 +338,14 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 					if violated:
 						violated_any = True
 						z3_clause = PPDSP_utils.learntClause_z3(self, learnt_clause)
-						log(f"[Z3] Vehicle {t} overload → add lazy cut of size {len(z3_clause)}")
+						# log(f"[Z3] Vehicle {t} overload → add lazy cut of size {len(z3_clause)}")
 						opt.add( Or(z3_clause) )
 
 				if violated_any:
 					continue
 
 				obj_val = model.evaluate(self.obj, model_completion=True).as_long()
-				log(f"[Z3] Feasible model found, OBJ: {obj_val}")
+				# log(f"[Z3] Feasible model found, OBJ: {obj_val}")
 				if best_val is None or obj_val > best_val:
 					best_val = obj_val
 					best_model_xy = list(filtered_model)

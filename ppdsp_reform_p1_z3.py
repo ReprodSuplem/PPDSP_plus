@@ -141,23 +141,42 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 					raise ValueError("mode must be 2 (implication), or 3 (CNF)")
 
 	def smt2Eq10(self):
+		node_requests = [ {'pickup': [], 'drop': []} for _ in range(self.lenOfLocation) ]
+		for r in range(self.lenOfRequest):
+			node_requests[self.requestList[r][2]]['pickup'].append(r)
+			node_requests[self.requestList[r][3]]['drop'].append(r)
+			
 		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation): # j is 'o'
+			for j in range(1 + self.lenOfLocation): # j is 'o'
 				for k in range(self.lenOfLocation): # k is 'd'
 					if k == j:
 						continue
 					Gamma = 0
-					for l in range(self.lenOfRequest):
-						if self.requestList[l][2] == k:
-							Gamma += self.requestList[l][1]
-						elif self.requestList[l][3] == k:
-							Gamma -= self.requestList[l][1]
-					self.smt2Opt.add(Implies(self.smt2x[i][j][k], self.smt2h[i][k] == self.smt2h[i][j] + Gamma))
+					# + Pickup Load (only when vehicle i serves request r)
+					for r in node_requests[k]['pickup']:
+						size = self.requestList[r][1]
+						Gamma += If(self.smt2y[r][i], size, 0)
+					# - Drop Load (only when vehicle i serves request r)
+					for r in node_requests[k]['drop']:
+						size = self.requestList[r][1]
+						Gamma -= If(self.smt2y[r][i], size, 0)
+					# Add constraint: x_{jk} -> h_k == h_j + Gamma
+					self.smt2Opt.add(
+						Implies(
+							self.smt2x[i][j][k], 
+							self.smt2h[i][k] == self.smt2h[i][j] + Gamma
+						)
+					)
 
 	def smt2Eq11(self):
 		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation):
-				self.smt2Opt.add(self.smt2h[i][j] <= int(self.vehicleList[i][0]))
+			cap = int(self.vehicleList[i][0])
+			for j in range(1 + self.lenOfLocation):
+				if j == self.lenOfLocation:
+					self.smt2Opt.add(self.smt2h[i][j] == 0)
+				else:
+					self.smt2Opt.add(self.smt2h[i][j] >= 0)
+					self.smt2Opt.add(self.smt2h[i][j] <= cap)
 
 	def smt2Eq12(self):
 		for i in range(self.lenOfVehicle):

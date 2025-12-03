@@ -14,26 +14,29 @@ class PPDSP_MIP(PPDSP_reform):
 		self.insName = f"p1_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def addXVars(self):
-		for i in range(self.lenOfVehicle):
+		for i in range(len(self.xVarList)):
 			for j in range(len(self.xVarList[i])):
 				for k in range(len(self.xVarList[i][j])):
 					self._addVar('x', self.xVarList[i][j][k], 0, 1, "B")
 
 	def addYVars(self):
-		for i in range(self.lenOfRequest):
-			for j in range(self.lenOfVehicle):
+		for i in range(len(self.yVarList)):
+			for j in range(len(self.yVarList[i])):
 				self._addVar('y', self.yVarList[i][j], 0, 1, "B")
 
 	def addUVars(self):
-		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation):
+		for i in range(len(self.uVarList)):
+			for j in range(len(self.uVarList[i])):
 				self._addVar('u', self.uVarList[i][j], 0, self.lenOfLocation - 1, "I")
 
 	def addHVars(self):
-		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation):
+		for i in range(len(self.hVarList)):
+			for j in range(len(self.hVarList[i])):
 				cap = int(self.vehicleList[i][0])
-				self._addVar('h', self.hVarList[i][j], 0, cap, "I")
+				if j == self.lenOfLocation:
+					self._addVar('h', self.hVarList[i][j], 0, 0, "I")
+				else:
+					self._addVar('h', self.hVarList[i][j], 0, cap, "I")
 
 	def _addVar(self, prefix, var_id, lb, ub, vtype):
 		self.cpx.variables.add(names=[f"{prefix}{var_id}"], lb=[lb], ub=[ub], types=[vtype])
@@ -169,7 +172,7 @@ class PPDSP_MIP(PPDSP_reform):
 		print(f"bigM @ Eq.10: {bigM}")
 
 		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation):
+			for j in range(1 + self.lenOfLocation):
 				for k in range(self.lenOfLocation):
 					if k != j:
 						ind = ["h" + str(self.hVarList[i][j]),

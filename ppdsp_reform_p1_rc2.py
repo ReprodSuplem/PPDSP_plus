@@ -13,8 +13,8 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 		self.wcnf = WCNF()
 		self.cnf = CNF()
 		self.vpool = None
-		self.uVarLits = [[[] for j in range(self.lenOfLocation)] for i in range(self.lenOfVehicle)]
-		self.hVarLits = [[[] for j in range(self.lenOfLocation)] for i in range(self.lenOfVehicle)]
+		self.uVarLits = [[[] for j in range(len(self.uVarList[i]))] for i in range(len(self.uVarList))]
+		self.hVarLits = [[[] for j in range(len(self.hVarList[i]))] for i in range(len(self.hVarList))]
 		self.insName = f"p1_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def atLeastOne(self, varList):
@@ -97,7 +97,9 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 	def genHardClauseForEq11(self): # Literals allocation for Eq.10
 		self.resetVarIDforMaxSAT()
 		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation):
+			for j in range(1 + self.lenOfLocation):
+				if j == self.lenOfLocation:
+					continue # h^t_{depot} = 0
 				for k in range(int(self.vehicleList[i][0])):
 					self.hVarLits[i][j].append(self.newVarID())
 
@@ -146,7 +148,7 @@ class PPDSP_MaxSAT_p1(PPDSP_reform):
 
 	def genHardClauseForEq10(self):
 		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation): # j is 'o'
+			for j in range(1 + self.lenOfLocation): # j is 'o'
 				for k in range(self.lenOfLocation): # k is 'd'
 					if k != j:
 						litList = []

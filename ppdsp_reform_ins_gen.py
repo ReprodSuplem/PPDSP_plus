@@ -45,7 +45,7 @@ class PPDSP_reform:
 						  for j in range(self.lenOfLocation)]
 						  for i in range(self.lenOfVehicle)]
 		self.uVarList = [[0] * self.lenOfLocation for i in range(self.lenOfVehicle)]
-		self.hVarList = [[0] * self.lenOfLocation for i in range(self.lenOfVehicle)]
+		self.hVarList = [[0] * (1 + self.lenOfLocation) for i in range(self.lenOfVehicle)]
 
 	def readCSV(self):
 		# adjacency matrix
