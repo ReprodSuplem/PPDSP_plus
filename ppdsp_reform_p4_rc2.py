@@ -7,13 +7,14 @@ from pysat.formula import *
 from pysat.card import CardEnc
 
 class PPDSP_MaxSAT_p4(PPDSP_reform):
-	def __init__(self, tsplib, request, vehicle, connect):
-		super().__init__(tsplib, request, vehicle, connect)
+	def __init__(self, tsplib, request, vehicle, knn):
+		super().__init__(tsplib, request, vehicle, knn)
+		self.knn = int(knn)
 		self.wcnf = WCNF()
 		self.cnf = CNF()
 		self.vpool = None
 		self.hVarLits = [[[] for j in range(self.lenOfLocation)] for i in range(self.lenOfVehicle)]
-		self.insName = f"p4_{tsplib}_r{request}v{vehicle}c{connect}"
+		self.insName = f"p4_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def atLeastOne(self, varList):
 		self.wcnf.append(varList)
@@ -117,7 +118,48 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 						clause = [-self.yVarList[i][j], -self.nuVarList[j][self.requestList[i][2]][k], -self.nuVarList[j][self.requestList[i][3]][l]]
 						self.wcnf.append(clause)
 
-	def genSymmetryBreaking(self):
+	def genHardClauseForKnn(self): # Adding k-NN pruning constraints
+		for t in range(self.lenOfVehicle):
+			for i in range(len(self.adjMatrx)):
+				for j in range(len(self.adjMatrx[i])):
+					if self.adjMatrx[i][j] == 0:
+						x_var = self.xVarList[t][i][j]
+						self.wcnf.append([-x_var])
+
+	def genHardClauseFoRec(self):
+		"""
+		REC (Redundancy Elimination Constraints) enforces that a vehicle k only visits node i if it serves a request at i.
+		Constraint: x[j][i][k] -> OR(y[r][k] for r where i is pickup/drop of r)
+		
+		This prevents empty vehicles from visiting nodes, and prevents loaded vehicles
+		from making detours to non-target nodes.
+		"""
+		# Pre-compute request map for each node
+		# node_requests[i] = list of request indices that start or end at i
+		node_requests = [[] for _ in range(self.lenOfLocation)]
+		for r in range(self.lenOfRequest):
+			pickup = self.requestList[r][2]
+			dropoff = self.requestList[r][3]
+			node_requests[pickup].append(r)
+			node_requests[dropoff].append(r)
+			
+		rec_count = 0
+		for k in range(self.lenOfVehicle):
+			for i in range(self.lenOfLocation): # Target node i (exclude Depot)
+				# Collect requests relevant to node i
+				service_lits = [self.yVarList[r][k] for r in node_requests[i]]
+				# For all incoming edges (j -> i), add constraint
+				for j in range(self.lenOfLocation + 1): # j can be Depot
+					if j == i: continue
+					
+					x_var = self.xVarList[k][j][i]
+					
+					# Clause: -x^k_{ji} v y^k_{r1} v y^k_{r2} ...
+					self.wcnf.append([-x_var] + service_lits)
+					rec_count += 1		
+		print(f"[REC] Added {rec_count} clauses.")
+
+	def genHardClauseForSbc(self):
 		"""
 		SBC (Symmetry Breaking Constraints) for Homogeneous Fleet (Auto-Grouping version).
 		1. Groups vehicles by (capacity, cost).
@@ -177,7 +219,8 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		self.genHardClauseForEq8_1()
 		self.genHardClauseForEq8_2()
 		self.genHardClauseForEq9_1()
-		self.genSymmetryBreaking()
+		self.genHardClauseFoRec() if self.knn == 0 else self.genHardClauseForKnn()
+		self.genHardClauseForSbc()
 
 		print(f"[rc2] Generating instance: {self.insName}.wcnf ...")
 		self.wcnf.extend(self.cnf)

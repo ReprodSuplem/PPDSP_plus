@@ -5,11 +5,12 @@ from ppdsp_reform_utils import PPDSP_utils
 from z3 import *
 
 class PPDSP_SMT2_p1(PPDSP_reform):
-	def __init__(self, tsplib, request, vehicle, connect):
-		super().__init__(tsplib, request, vehicle, connect)
+	def __init__(self, tsplib, request, vehicle, knn):
+		super().__init__(tsplib, request, vehicle, knn)
+		self.knn = int(knn)
 		self.smt2Opt = Optimize()
 		self.optimal = 0
-		self.insName = f"p1_{tsplib}_r{request}v{vehicle}c{connect}"
+		self.insName = f"p1_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def addXVars(self):
 		self.smt2x = [[[Bool(f"x{self.xVarList[i][j][k]}") for k in range(len(self.xVarList[i][j]))] for j in range(len(self.xVarList[i]))] for i in range(len(self.xVarList))]
@@ -164,6 +165,102 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 				self.smt2Opt.add(self.smt2u[i][j] <= self.lenOfLocation - 1)
 				self.smt2Opt.add(self.smt2u[i][j] >= 0)
 
+	def smt2Knn(self):
+		for t in range(self.lenOfVehicle):
+			for i in range(len(self.adjMatrx)):
+				for j in range(len(self.adjMatrx[i])):
+					if self.adjMatrx[i][j] == 0:
+						self.smt2Opt.add(Not(self.smt2x[t][i][j]))
+
+	def smt2Rec(self):
+		"""
+		REC: Implies(x[t][j][i], Or(y[r][t]...))
+		"""
+		print("[Z3] Adding Redundancy Elimination Constraints (REC)...")
+		
+		node_requests = [[] for _ in range(self.lenOfLocation)]
+		for r in range(self.lenOfRequest):
+			pickup = self.requestList[r][2]
+			dropoff = self.requestList[r][3]
+			node_requests[pickup].append(r)
+			node_requests[dropoff].append(r)
+			
+		rec_count = 0
+		for t in range(self.lenOfVehicle):
+			for i in range(self.lenOfLocation): # Target node i (exclude Depot)
+				# Collect requests relevant to node i
+				service_lits = [self.smt2y[r][t] for r in node_requests[i]]
+				# Service Condition: False for empty service_lits
+				if service_lits:
+					service_condition = Or(service_lits)
+				else:
+					service_condition = False 
+
+				for j in range(self.lenOfLocation + 1): # Source j (can be Depot)
+					if j == i: continue
+					
+					# Constraint: x -> service
+					if service_condition is False:
+						# Block incoming edges if no requests at node i
+						self.smt2Opt.add(Not(self.smt2x[t][j][i]))
+					else:
+						self.smt2Opt.add(Implies(self.smt2x[t][j][i], service_condition))
+					rec_count += 1
+		print(f"[Z3] Added {rec_count} REC implications.")
+
+	def smt2Sbc(self):
+		"""
+		SBC (Symmetry Breaking Constraints) for Homogeneous Fleet (Auto-Grouping version).
+		1. Groups vehicles by (capacity, cost).
+		2. Applies lexicographic ordering within each group:
+			For group [v1, v2, v3...]:
+				- v1 is 'leader' of v2
+				- v2 is 'leader' of v3
+		Constraint: If vehicle 'follower' uses request r,
+		vehicle 'leader' must have served a request < r.
+		"""
+		# 1. Auto-grouping: find all homogeneous vehicles
+		# Key: (capacity, cost), Value: [vehicle_id_1, vehicle_id_2, ...]
+		groups = {}
+		for t in range(self.lenOfVehicle):
+			# Convert list to tuple for dict key
+			cap = self.vehicleList[t][0]
+			cost = self.vehicleList[t][1]
+			key = (cap, cost)
+			
+			if key not in groups:
+				groups[key] = []
+			groups[key].append(t)
+			
+		# 2. Apply chain constraints within each group of homogeneous vehicles
+		sbc_count = 0
+		for key, veh_ids in groups.items():
+			if len(veh_ids) < 2:
+				continue # Only one vehicle of this type, no SBC needed
+			# print(f"[SBC] Group {key}: vehicles {veh_ids}")
+
+			# Chain constraints: v[0] is leader of v[1], v[1] is leader of v[2], ...
+			for i in range(len(veh_ids) - 1):
+				leader = veh_ids[i]
+				follower = veh_ids[i+1]
+				
+				for r in range(self.lenOfRequest):
+					# y[r][follower] -> (y[0][leader] v ... v y[r-1][leader])
+					clause = [-self.yVarList[r][follower]]
+					for prev_r in range(r):
+						clause.append(self.yVarList[prev_r][leader])
+					
+					y_follower = Bool(f"y{self.yVarList[r][follower]}")
+					y_leader_vars = [Bool(f"y{self.yVarList[pr][leader]}") for pr in range(r)]
+					
+					if y_leader_vars:
+						self.smt2Opt.add(Implies(y_follower, Or(y_leader_vars)))
+					else:
+						# r=0, follower cannot serve request 0 (must be leader)
+						self.smt2Opt.add(Not(y_follower))
+					sbc_count += 1
+		print(f"[SBC] Added {sbc_count} clauses.")
+
 	def genSmt2Formular(self):
 		print("[Z3] Adding varibles ...")
 		self.genXVarList()
@@ -189,15 +286,17 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 		self.smt2Eq10()
 		self.smt2Eq11()
 		self.smt2Eq12()
+		self.smt2Rec() if self.knn == 0 else self.smt2Knn()
+		self.smt2Sbc()
 
 	def solve(self, time_limit=5):
 		import time
 		start_time = time.time()
 
 		print(f"[Z3] Solving instance: {self.insName} ...")
-		if time_limit is not None:
-			print(f"[Z3] Setting time limit to {time_limit} seconds")
-			self.smt2Opt.set("timeout", time_limit * 1000)
+		#if time_limit is not None:
+		#	print(f"[Z3] Setting time limit to {time_limit} seconds")
+		#	self.smt2Opt.set("timeout", time_limit * 1000)
 		PPDSP_utils.buildVarIndexMap(self)
 
 		opt = self.smt2Opt
@@ -208,9 +307,16 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 				f.write(msg + "\n")
 				f.flush()
 
-			if opt.check() != sat:
-				elapsed = time.time() - start_time
-				log("[Z3] UNSAT.")
+			if time_limit is not None:
+				res = PPDSP_utils.solve_z3_with_interrupt(opt, time_limit)
+			else:
+				res = opt.check()
+			elapsed = time.time() - start_time
+			if res != sat:
+				if res is None or str(res) == 'unknown':
+					log("[Z3] Timeout / Unknown.")
+				else:
+					log("[Z3] UNSAT.")
 				log(f"[Z3] Runtime: {elapsed:.3f} sec")
 				return None
 

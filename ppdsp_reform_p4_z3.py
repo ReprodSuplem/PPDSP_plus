@@ -5,11 +5,12 @@ from ppdsp_reform_utils import PPDSP_utils
 from z3 import *
 
 class PPDSP_SMT2_p4(PPDSP_reform):
-	def __init__(self, tsplib, request, vehicle, connect):
-		super().__init__(tsplib, request, vehicle, connect)
+	def __init__(self, tsplib, request, vehicle, knn):
+		super().__init__(tsplib, request, vehicle, knn)
+		self.knn = int(knn)
 		self.smt2Opt = Optimize()
 		self.optimal = 0
-		self.insName = f"p4_{tsplib}_r{request}v{vehicle}c{connect}"
+		self.insName = f"p4_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def addXVars(self):
 		self.smt2x = [[[Bool(f"x{self.xVarList[i][j][k]}") for k in range(len(self.xVarList[i][j]))] for j in range(len(self.xVarList[i]))] for i in range(len(self.xVarList))]
@@ -146,7 +147,50 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 				self.smt2Opt.add(self.smt2u[i][j] <= self.lenOfLocation - 1)
 				self.smt2Opt.add(self.smt2u[i][j] >= 0)
 
-	def genSymmetryBreaking(self):
+	def smt2Knn(self):
+		for t in range(self.lenOfVehicle):
+			for i in range(len(self.adjMatrx)):
+				for j in range(len(self.adjMatrx[i])):
+					if self.adjMatrx[i][j] == 0:
+						self.smt2Opt.add(Not(self.smt2x[t][i][j]))
+
+	def smt2Rec(self):
+		"""
+		REC: Implies(x[t][j][i], Or(y[r][t]...))
+		"""
+		print("[Z3] Adding Redundancy Elimination Constraints (REC)...")
+		
+		node_requests = [[] for _ in range(self.lenOfLocation)]
+		for r in range(self.lenOfRequest):
+			pickup = self.requestList[r][2]
+			dropoff = self.requestList[r][3]
+			node_requests[pickup].append(r)
+			node_requests[dropoff].append(r)
+			
+		rec_count = 0
+		for t in range(self.lenOfVehicle):
+			for i in range(self.lenOfLocation): # Target node i (exclude Depot)
+				# Collect requests relevant to node i
+				service_lits = [self.smt2y[r][t] for r in node_requests[i]]
+				# Service Condition: False for empty service_lits
+				if service_lits:
+					service_condition = Or(service_lits)
+				else:
+					service_condition = False 
+
+				for j in range(self.lenOfLocation + 1): # Source j (can be Depot)
+					if j == i: continue
+					
+					# Constraint: x -> service
+					if service_condition is False:
+						# Block incoming edges if no requests at node i
+						self.smt2Opt.add(Not(self.smt2x[t][j][i]))
+					else:
+						self.smt2Opt.add(Implies(self.smt2x[t][j][i], service_condition))
+					rec_count += 1
+		print(f"[Z3] Added {rec_count} REC implications.")
+
+	def smt2Sbc(self):
 		"""
 		SBC (Symmetry Breaking Constraints) for Homogeneous Fleet (Auto-Grouping version).
 		1. Groups vehicles by (capacity, cost).
@@ -222,11 +266,11 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 		self.smt2Eq8(mode=2)
 		self.smt2Eq9(mode=2)
 		self.smt2Eq12()
-		self.genSymmetryBreaking()
+		self.smt2Rec() if self.knn == 0 else self.smt2Knn()
+		self.smt2Sbc()
 
 	def solve(self, time_limit=5):
 		import time
-		from z3 import sat, unknown
 		start_time = time.time()
 
 		print(f"[Z3] Solving instance: {self.insName} ...")

@@ -6,43 +6,10 @@ import math
 import random
 import pandas as pd
 import networkx as nx
-import itertools
 from typing import List, Tuple
 
 def my_round_int(x: float) -> int:
     return int((x * 2 + 1) // 2)
-
-def gnp_random_connected_graph(n: int, p: float, t: int, s: float) -> List[nx.Graph]:
-	"""
-	Generates a random undirected graph, similarly to an Erdős-Rényi 
-	graph, but enforcing that the resulting graph is conneted
-	- n: number of nodes
-	- p: base probability of adding extra edges
-	- t: number of graphs to generate
-	- s: step increment for probability in subsequent graphs
-	Returns a list of NetworkX graphs.
-	"""
-	GList = []
-	for iter_idx in range(t):
-		if iter_idx == 0:
-			G = nx.Graph()
-			G.add_nodes_from(range(n))
-			# Connect at least one edge for each node to ensure connectivity
-			edgesItr1 = itertools.combinations(random.sample(list(range(n)), n), 2)
-			for _, node_edges in itertools.groupby(edgesItr1, key=lambda x: x[0]):
-				random_edge = random.choice(list(node_edges))
-				G.add_edge(*random_edge)
-		else:
-			G = GList[iter_idx-1].copy()
-
-		edgesItr2 = itertools.combinations(range(n), 2)
-		for e in edgesItr2:
-			if iter_idx == 0 and (not G.has_edge(*e)) and random.random() > (1-p)/(1-2*(n-1)/(n**2-n)):
-				G.add_edge(*e)
-			if iter_idx != 0 and (not G.has_edge(*e)) and random.random() > (1-(p+iter_idx*s))/(1-(p+(iter_idx-1)*s)):
-				G.add_edge(*e)
-		GList.append(G.copy())
-	return GList
 
 def read_tsplib_coords(tspPath: str) -> Tuple[List[Tuple[float, float]], str]:
 	"""
@@ -185,29 +152,71 @@ def write_request_csvs(requestList: List[List[int]], tspName: str, cutLens: List
 		df = pd.DataFrame(requestList[:len])
 		df.to_csv(f'{outDir}/requestInfo{len}_{tspName}.csv', header=False, index=False)
 
-def gen_adj_matrs(lenOfCoord: int, connectRatio: float, sizeOfGList: int, skip: float, tspName: str, outDir: str = "."):
+def gen_adj_matrs(coords: List[Tuple[float, float]], start_k: int, sizeOfGList: int, skip: int, tspName: str, outDir: str = "."):
 	"""
-	# Generate adjacency matrices corresponding to connected random graphs
-	adjMatrx{int(10*(connectRatio+i*skip))}_{tspName}.csv
+	Generate adjacency matrices using Union of k-NN and MST.
+	Ensures connectivity without relying solely on Depot transit.
+	
+	Strategy: Edge is kept if it is in k-NN OR it is in the Euclidean MST.
 	"""
-	GList = gnp_random_connected_graph(lenOfCoord, connectRatio, sizeOfGList, skip)
-	#plt.figure(figsize=(8,5))
-	#nx.draw(GList[0], node_color='lightblue', with_labels=True, node_size=500)
-	#plt.show()
-	for i, G in enumerate(GList): # 0:=no_edge, 1:=edge, and 2:=free_edge (cost=0)
-		# Initialize with 0s, with 1s on the main diagonal.
+	lenOfCoord = len(coords)
+	depot_idx = lenOfCoord - 1
+	
+	# 1. Build a complete graph with weights to compute MST
+	G_complete = nx.Graph()
+	all_dists = [[0]*lenOfCoord for _ in range(lenOfCoord)]
+	
+	for i in range(lenOfCoord):
+		all_dists[i][i] = (0, i)
+		for j in range(i + 1, lenOfCoord):
+			dist = math.dist(coords[i], coords[j])
+			G_complete.add_edge(i, j, weight=dist)
+			all_dists[i][j] = (dist, j)
+			all_dists[j][i] = (dist, i) # Symmetric
+
+	# 2. Compute Minimum Spanning Tree (MST)
+	# This guarantees the graph is connected with minimum total length
+	mst_edges = set(nx.minimum_spanning_edges(G_complete, algorithm="kruskal", data=False)) # Using Kruskal algorithm
+	# mst_edges looks like {(u, v), (x, y)...}
+
+	for iter_idx in range(sizeOfGList):
+		current_k = int(start_k + iter_idx * skip)
+		
+		# Initialize with 0s
 		adjMatrix = [[0]*lenOfCoord for _ in range(lenOfCoord)]
-		for r in range(lenOfCoord):
-			adjMatrix[r][r] = 1
-		#for i in range(lenOfCoord):
-		#	adjMatrix[-1][i] = 2
-		#	adjMatrix[i][-1] = 2
-		for (u, v) in G.edges():
+			
+		# --- A. Add k-NN Edges ---
+		for i in range(lenOfCoord):
+			# Sort neighbors by distance
+			neighbors = sorted(all_dists[i], key=lambda x: x[0])
+			
+			# Keep top-K (neighbors[0] is self, so range is 1 to K+1)
+			limit = min(lenOfCoord, current_k + 1)
+			for rank in range(1, limit):
+				target_node = neighbors[rank][1]
+				adjMatrix[i][target_node] = 1
+				adjMatrix[target_node][i] = 1 # Symmetry preferred for undirected logic
+
+		# --- B. Add MST Edges (Safety Net) ---
+		for u, v in mst_edges:
 			adjMatrix[u][v] = 1
 			adjMatrix[v][u] = 1
-		coefficient = int(10 * (connectRatio + i * skip))
+
+		# --- C. Force Depot Connectivity ---
+		# Even with MST, direct access to Depot is crucial for vehicle dispatch logic
+		for i in range(lenOfCoord):
+			adjMatrix[depot_idx][i] = 1
+			adjMatrix[i][depot_idx] = 1
+
+		# Save to CSV
 		df = pd.DataFrame(adjMatrix)
-		df.to_csv(f'{outDir}/adjMatrx{coefficient}_{tspName}.csv', header=False, index=False)
+		df.to_csv(f'{outDir}/adjMatrx{current_k}_{tspName}.csv', header=False, index=False)
+
+		fullAdjMatrix = [[1]*lenOfCoord for _ in range(lenOfCoord)]
+		for r in range(lenOfCoord):
+			fullAdjMatrix[r][r] = 0 # Block self-loop
+		df_full = pd.DataFrame(fullAdjMatrix)
+		df_full.to_csv(f'{outDir}/adjMatrx0_{tspName}.csv', header=False, index=False)
 
 def gen_vehic_caps(nOfVehicList: List[int], tspName: str, outDir: str = "."):
 	avgCap = 20
@@ -222,30 +231,34 @@ def gen_vehic_caps(nOfVehicList: List[int], tspName: str, outDir: str = "."):
 def gen_all_ins_arg(tspPath: str,
 					repetRateList: List[float] = [3, 2.5, 2, 1.5, 1],
 					nOfVehicList: List[int] = [2, 4, 6, 8, 10],
-					connectRatio: float = 1,
-					sizeOfGList: int = 1,
-					skip: float = 0.1,
+					start_k: int = 4,
+					sizeOfGList: int = 3,
+					skip: int = 2,
 					outDir: str = ".",
 					seed: int = None):
 	"""
 	Main function: Given a TSP file and several parameters, generate all related CSV files (nodes, requests, vehicles, and adjacency matrices).
 	- repetRateList: a list repet rates used to split the request file
 	- nOfVehicList: a list of the number of vehicles
-	- connectRatio, sizeOfGList, skip: parameters controlling the generation of adjacency matrices
+	- start_k, sizeOfGList, skip: parameters controlling the generation of adjacency matrices
 	"""
 	if seed is not None:
 		random.seed(seed)
 
+	# 1. Read Nodes
 	coords, tspName = read_tsplib_coords(tspPath)
 	lenOfCoord = len(coords)
 	write_nodes_csv(coords, tspName, outDir=outDir)
 
-	# Use the first repeat rate to generate a complete request list (then save different cuts of it).
+	# 2. Generate Requests
+    # Use the first repeat rate to generate a complete request list
 	requestList = gen_request_list(coords, repetRateList[0], seed=seed)
 	write_request_csvs(requestList, tspName, [my_round_int((lenOfCoord-1) * r / 2) for r in repetRateList], outDir=outDir)
 
-	gen_adj_matrs(len(coords), connectRatio, sizeOfGList, skip, tspName, outDir=outDir)
+	# 3. Generate Adjacency Matrices (k-NN + MST)
+	gen_adj_matrs(coords, start_k, sizeOfGList, skip, tspName, outDir=outDir)
 
+	# 4. Generate Vehicles
 	gen_vehic_caps(nOfVehicList, tspName, outDir=outDir)
 
 	#print("Generation Completed.", tspName)

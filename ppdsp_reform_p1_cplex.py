@@ -6,11 +6,12 @@ import cplex
 from cplex import SparsePair
 
 class PPDSP_MIP(PPDSP_reform):
-	def __init__(self, tsplib, request, vehicle, connect):
-		super().__init__(tsplib, request, vehicle, connect)
+	def __init__(self, tsplib, request, vehicle, knn):
+		super().__init__(tsplib, request, vehicle, knn)
+		self.knn = int(knn)
 		self.cpx = cplex.Cplex()
 		self.cpx.objective.set_sense(self.cpx.objective.sense.maximize)
-		self.insName = f"p1_{tsplib}_r{request}v{vehicle}c{connect}"
+		self.insName = f"p1_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def addXVars(self):
 		for i in range(self.lenOfVehicle):
@@ -200,6 +201,91 @@ class PPDSP_MIP(PPDSP_reform):
 							rhs=[-float(bigM)]
 						)
 
+	def mipKnn(self): # Applying k-NN sparsification
+		indices = []
+		values = []
+		for t in range(self.lenOfVehicle):
+			for i in range(len(self.adjMatrx)):
+				for j in range(len(self.adjMatrx[i])):
+					# x^t_{ij} has been pruned by k-NN, if adjMatrx[i][j] == 0
+					if self.adjMatrx[i][j] == 0:
+						var_id = self.xVarList[t][i][j]
+						var_name = f"x{var_id}"
+						indices.append(var_name)
+						values.append(0.0)
+		if indices:
+			self.cpx.variables.set_upper_bounds(zip(indices, values))
+
+	def mipRec(self):
+		"""
+		REC: x[t][j][i] <= Sum(y[r][t] for r at i)
+		Linear form: x[t][j][i] - Sum(y[r][t]) <= 0
+		"""
+		node_requests = [[] for _ in range(self.lenOfLocation)]
+		for r in range(self.lenOfRequest):
+			pickup = self.requestList[r][2]
+			dropoff = self.requestList[r][3]
+			node_requests[pickup].append(r)
+			node_requests[dropoff].append(r)
+			
+		rec_count = 0
+		for t in range(self.lenOfVehicle):
+			for i in range(self.lenOfLocation): # Target node i (exclude Depot)
+				# For all incoming edges (j -> i), add constraint
+				for j in range(self.lenOfLocation + 1): # Source j (can be Depot)
+					if j == i: continue
+					
+					# Linear expression: x[t][j][i] - Sum(y[r][t] for r at i) <= 0
+					ind = [f"x{self.xVarList[t][j][i]}"]
+					val = [1.0]
+					
+					for r in node_requests[i]:
+						ind.append(f"y{self.yVarList[r][t]}")
+						val.append(-1.0)
+						
+					self.cpx.linear_constraints.add(
+						lin_expr=[cplex.SparsePair(ind=ind, val=val)],
+						senses=['L'],
+						rhs=[0.0]
+					)
+					rec_count += 1
+		print(f"[CPLEX] Added {rec_count} REC inequalities.")
+
+	def mipSbc(self):
+		"""
+		SBC for Homogeneous Fleet (Grouped).
+		Constraint: y[r][follower] <= Sum(y[prev_r][leader] for prev_r < r)
+		"""
+		groups = {}
+		for t in range(self.lenOfVehicle):
+			cap = self.vehicleList[t][0]
+			cost = self.vehicleList[t][1]
+			key = (cap, cost)
+			if key not in groups:
+				groups[key] = []
+			groups[key].append(t)
+			
+		# Chain constraints within each group of homogeneous vehicles
+		for key, veh_ids in groups.items():
+			if len(veh_ids) < 2: continue
+			# v[0] <- v[1] <- v[2] ...
+			for i in range(len(veh_ids) - 1):
+				leader = veh_ids[i]
+				follower = veh_ids[i+1]
+				
+				for r in range(self.lenOfRequest):
+					# y[r][follower] - Sum(y[prev_r][leader] for prev_r < r) <= 0
+					ind = [f"y{self.yVarList[r][follower]}"]
+					val = [1.0]
+					for prev_r in range(r):
+						ind.append(f"y{self.yVarList[prev_r][leader]}")
+						val.append(-1.0)
+					self.cpx.linear_constraints.add(
+						lin_expr=[cplex.SparsePair(ind=ind, val=val)],
+						senses=['L'],
+						rhs=[0.0]
+					)
+
 	def genMipFormular(self):
 		self.genXVarList()
 		self.genYVarList()
@@ -218,6 +304,8 @@ class PPDSP_MIP(PPDSP_reform):
 		self.mipEq8()
 		self.mipEq9()
 		self.mipEq10()
+		self.mipRec() if self.knn == 0 else	self.mipKnn()
+		self.mipSbc()
 		self.mipObj()
 
 	def writeLpFile(self):
@@ -230,6 +318,8 @@ class PPDSP_MIP(PPDSP_reform):
 		if time_limit is not None:
 			print(f"[CPLEX] Setting time limit to {time_limit} seconds")
 			self.cpx.parameters.timelimit.set(time_limit)
+
+		self.cpx.parameters.threads.set(1)
 
 		log_file = f"{self.insName}.lp.out"
 		with open(log_file, "w") as f:

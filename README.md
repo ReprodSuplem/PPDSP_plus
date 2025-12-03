@@ -1,6 +1,6 @@
 # PPDSP_Plus
 
-This repository contains code for the **Profit-maximizing multi-vehicle Pickup and Delivery Selection Problem (PPDSP)** using multiple solvers including **Z3**, **CPLEX**, and **MaxSAT** (RC2 / UWRMaxSAT).
+This repository contains code for the **Profit-maximizing multi-vehicle Pickup and Delivery Selection Problem (PPDSP)** using multiple solvers including **Z3**, **CPLEX**, and **UWrMaxSat**.
 
 ---
 
@@ -26,7 +26,7 @@ The main entry point is main.py.
 It accepts the following command-line arguments:
 
 ```bash
-python main.py <mode> <method> <tsplib_file> <num_requests> <num_vehicles> <connectivity>
+python main.py <mode> <method> <tsplib_file> <num_requests> <num_vehicles> <k-NN>
 ```
 
 ### Arguments
@@ -37,7 +37,7 @@ python main.py <mode> <method> <tsplib_file> <num_requests> <num_vehicles> <conn
 | `<tsplib_file>`  | TSPLIB instance file name               | `burma14`,`ulysses16`             |
 | `<num_requests>` | Number of pickup-delivery requests      | `7`                               |
 | `<num_vehicles>` | Number of available vehicles            | `2`                               |
-| `<connectivity>` | Connectivity ratio for adjacency matrix | `10`                              |
+| `<k-NN>`         | $k$ value of $k$-NN adjacency matrix    | `4`, `0` (0 for complete graph)   |
 
 
 ## 💡 Example
@@ -48,13 +48,13 @@ Run PPDSP on a small TSPLIB instance:
 python main.py gen ./burma14.tsp
 
 # Solving by Z3 solver
-python main.py smt2 p1 burma14 7 2 10
+python main.py smt2 p1 burma14 7 2 4
 
 # Solving by CPLEX solver
-python main.py mip p1 burma14 7 4 10
+python main.py mip p1 burma14 7 4 6
 
-# Solving by RC2 solver
-python main.py maxsat p2 burma14 13 2 10
+# Solving by UWrMaxSat solver
+python main.py maxsat p2 burma14 13 2 7
 ```
 
 ### For maxsat mode:
@@ -137,7 +137,7 @@ conda activate exp-env
 
 # 3️⃣ Run a test case
 python main.py gen ./burma14.tsp
-python main.py maxsat p2 burma14 7 2 10
+python main.py maxsat p2 burma14 7 2 4
 ```
 
 ## 🧠 Citation

@@ -4,16 +4,16 @@ from ppdsp_reform_ins_gen import PPDSP_reform
 from ppdsp_reform_utils import PPDSP_utils
 from pysat.pb import *
 from pysat.formula import *
-from pysat.card import CardEnc
 
 class PPDSP_MaxSAT_p2(PPDSP_reform):
-	def __init__(self, tsplib, request, vehicle, connect):
-		super().__init__(tsplib, request, vehicle, connect)
+	def __init__(self, tsplib, request, vehicle, knn):
+		super().__init__(tsplib, request, vehicle, knn)
+		self.knn = int(knn)
 		self.wcnf = WCNF()
 		self.cnf = CNF()
 		self.vpool = None
 		self.hVarLits = [[[] for j in range(self.lenOfLocation)] for i in range(self.lenOfVehicle)]
-		self.insName = f"p2_{tsplib}_r{request}v{vehicle}c{connect}"
+		self.insName = f"p2_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def atLeastOne(self, varList):
 		self.wcnf.append(varList)
@@ -163,6 +163,93 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 							self.cnf.append([-self.xVarList[i][j][k]] + clause, update_vpool=True)
 		#print(self.cnf.clauses)
 
+	def genHardClauseForKnn(self): # Adding k-NN pruning constraints
+		for t in range(self.lenOfVehicle):
+			for i in range(len(self.adjMatrx)):
+				for j in range(len(self.adjMatrx[i])):
+					if self.adjMatrx[i][j] == 0:
+						x_var = self.xVarList[t][i][j]
+						self.wcnf.append([-x_var])
+
+	def genHardClauseFoRec(self):
+		"""
+		REC (Redundancy Elimination Constraints) enforces that a vehicle k only visits node i if it serves a request at i.
+		Constraint: x[j][i][k] -> OR(y[r][k] for r where i is pickup/drop of r)
+		
+		This prevents empty vehicles from visiting nodes, and prevents loaded vehicles
+		from making detours to non-target nodes.
+		"""
+		# Pre-compute request map for each node
+		# node_requests[i] = list of request indices that start or end at i
+		node_requests = [[] for _ in range(self.lenOfLocation)]
+		for r in range(self.lenOfRequest):
+			pickup = self.requestList[r][2]
+			dropoff = self.requestList[r][3]
+			node_requests[pickup].append(r)
+			node_requests[dropoff].append(r)
+			
+		rec_count = 0
+		for k in range(self.lenOfVehicle):
+			for i in range(self.lenOfLocation): # Target node i (exclude Depot)
+				# Collect requests relevant to node i
+				service_lits = [self.yVarList[r][k] for r in node_requests[i]]
+				# For all incoming edges (j -> i), add constraint
+				for j in range(self.lenOfLocation + 1): # j can be Depot
+					if j == i: continue
+					
+					x_var = self.xVarList[k][j][i]
+					
+					# Clause: -x^k_{ji} v y^k_{r1} v y^k_{r2} ...
+					self.wcnf.append([-x_var] + service_lits)
+					rec_count += 1		
+		print(f"[REC] Added {rec_count} clauses.")
+
+	def genHardClauseForSbc(self):
+		"""
+		SBC (Symmetry Breaking Constraints) for Homogeneous Fleet (Auto-Grouping version).
+		1. Groups vehicles by (capacity, cost).
+		2. Applies lexicographic ordering within each group:
+			For group [v1, v2, v3...]:
+				- v1 is 'leader' of v2
+				- v2 is 'leader' of v3
+		Constraint: If vehicle 'follower' uses request r,
+		vehicle 'leader' must have served a request < r.
+		"""
+		# 1. Auto-grouping: find all homogeneous vehicles
+		# Key: (capacity, cost), Value: [vehicle_id_1, vehicle_id_2, ...]
+		groups = {}
+		for t in range(self.lenOfVehicle):
+			# Convert list to tuple for dict key
+			cap = self.vehicleList[t][0]
+			cost = self.vehicleList[t][1]
+			key = (cap, cost)
+			
+			if key not in groups:
+				groups[key] = []
+			groups[key].append(t)
+			
+		# 2. Apply chain constraints within each group of homogeneous vehicles
+		sbc_count = 0
+		for key, veh_ids in groups.items():
+			if len(veh_ids) < 2:
+				continue # Only one vehicle of this type, no SBC needed
+			# print(f"[SBC] Group {key}: vehicles {veh_ids}")
+
+			# Chain constraints: v[0] is leader of v[1], v[1] is leader of v[2], ...
+			for i in range(len(veh_ids) - 1):
+				leader = veh_ids[i]
+				follower = veh_ids[i+1]
+				
+				for r in range(self.lenOfRequest):
+					# y[r][follower] -> (y[0][leader] v ... v y[r-1][leader])
+					clause = [-self.yVarList[r][follower]]
+					for prev_r in range(r):
+						clause.append(self.yVarList[prev_r][leader])
+					
+					self.wcnf.append(clause)
+					sbc_count += 1
+		print(f"[SBC] Added {sbc_count} clauses.")
+
 	def genMaxsatFormular(self):
 		self.genXVarList()
 		self.genYVarList()
@@ -182,6 +269,8 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 		#self.printHVarLits()
 		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.10
 		self.genHardClauseForEq10()
+		self.genHardClauseFoRec() if self.knn == 0 else self.genHardClauseForKnn()
+		self.genHardClauseForSbc()
 
 		print(f"[rc2] Generating instance: {self.insName}.wcnf ...")
 		self.wcnf.extend(self.cnf)

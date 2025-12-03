@@ -30,11 +30,11 @@ class PPDSP_reform:
 
 	id2Var = None
 
-	def __init__(self, tsplib, request, vehicle, connect):
+	def __init__(self, tsplib, request, vehicle, knn):
 		self.coordCSV = f'2DNode_{tsplib}.csv'
 		self.reqstCSV = f'requestInfo{request}_{tsplib}.csv'
 		self.vehiCSV = f'vehicleCap{vehicle}_{tsplib}.csv'
-		self.adjMxCSV = f'adjMatrx{connect}_{tsplib}.csv'
+		self.adjMxCSV = f'adjMatrx{knn}_{tsplib}.csv'
 		self.readCSV()
 
 		self.xVarList = [[[0] * (1 + self.lenOfLocation)
