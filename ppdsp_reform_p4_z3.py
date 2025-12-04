@@ -274,9 +274,9 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 		start_time = time.time()
 
 		print(f"[Z3] Solving instance: {self.insName} ...")
-		if time_limit is not None:
-			print(f"[Z3] Setting time limit to {time_limit} seconds")
-			self.smt2Opt.set("timeout", time_limit * 1000)
+		#if time_limit is not None:
+		#	print(f"[Z3] Setting time limit to {time_limit} seconds")
+		#	self.smt2Opt.set("timeout", time_limit * 1000)
 		PPDSP_utils.buildVarIndexMap(self)
 
 		opt = self.smt2Opt

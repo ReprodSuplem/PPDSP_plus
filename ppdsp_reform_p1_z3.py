@@ -34,7 +34,8 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 			for j in range(1+self.lenOfLocation):
 				for k in range(1+self.lenOfLocation):
 					cost.append(self.my_round_int(self.vehicleList[i][1] * self.locaList[j][k]) * If(self.smt2x[i][j][k], 1, 0))
-		self.optimal = self.smt2Opt.maximize(Sum(profit) - Sum(cost))
+		self.obj = Sum(profit) - Sum(cost)
+		self.optimal = self.smt2Opt.maximize(self.obj)
 		#print(self.smt2Opt.objectives())
 
 	def smt2Eq3(self):
@@ -319,6 +320,40 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 		PPDSP_utils.buildVarIndexMap(self)
 
 		opt = self.smt2Opt
+
+		# Read assumption file if exists, and set assumptions
+		assumption_file = self.insName + ".smt2.asp"
+		assumption_faile = False
+		if assumption_file:
+			print(f"[Z3] Reading assumption from {assumption_file} ...")
+			lits = PPDSP_utils.read_assumption_literals(assumption_file)
+			
+			if lits:
+				z3_assumps = [] # Z3 assumptions list (BoolRef) only including x and y vars
+				PPDSP_utils.buildVarIndexMap(self)
+				for vid in lits:
+					z3_var = PPDSP_utils.get_z3_var(self, vid)
+					if z3_var is not None:
+						if vid > 0:
+							z3_assumps.append(z3_var)
+						else:
+							z3_assumps.append(Not(z3_var))
+				
+				if z3_assumps:
+					print("[Z3] Verifying assumption model...")
+					check_res = opt.check(z3_assumps)
+					
+					if check_res == sat:
+						model = opt.model()
+						obj_val = model.evaluate(self.obj).as_long()
+						print(f"[Z3] Assumption VALID. Starting objective: {obj_val}")
+						
+						# Update lower bound, and keep searching a better opt obj
+						opt.add(self.obj > obj_val)
+					else:
+						assumption_faile = True
+						print("[Z3] Assumption INVALID (UNSAT with current constraints). Ignoring.")
+
 		log_file = f"{self.insName}.smt2.out"
 		with open(log_file, "w") as f:
 			def log(msg):
@@ -332,14 +367,20 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 				res = opt.check()
 			elapsed = time.time() - start_time
 			if res != sat:
-				if res is None or str(res) == 'unknown':
-					log("[Z3] Timeout / Unknown.")
+				if assumption_faile:
+					if res is None or str(res) == 'unknown':
+						log("[Z3] Timeout / Unknown.")
+					else:
+						log("[Z3] UNSAT.")
+					log(f"[Z3] Runtime: {elapsed:.3f} sec")
+					return None
 				else:
-					log("[Z3] UNSAT.")
-				log(f"[Z3] Runtime: {elapsed:.3f} sec")
-				return None
+					if res is None:
+						log("[Z3] Timeout.")
+					log(f"[Z3] Runtime: {elapsed:.3f} sec")
 
-			model = opt.model()
+			if assumption_faile:
+				model = opt.model()
 			filtered_model = PPDSP_utils.extractXYModel_z3(self, model)
 			
 			log("[Z3] Optimal model found.")

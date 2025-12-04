@@ -231,12 +231,12 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		wcnf_file = self.insName + ".wcnf"
 		lastY = self.getLastYVarID()
 		meta_file = self.insName + ".meta"
-		assumption_file = self.insName + ".asp"
+		assumption_file = wcnf_file + ".asp"
 		log_file  = wcnf_file + ".out"
 
 		# Run uwrmaxsat with meta file and assumption file
 		# -ppdsp-assume={assumption_file}
-		cmd = f"stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} -ppdsp={meta_file} -ppdsp-assume={assumption_file} {wcnf_file} | tee {log_file}"
+		cmd = f"stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} -ppdsp={meta_file} {wcnf_file} | tee {log_file}"
 		print(f"[UWrMaxSAT] Running command:\n  {cmd}")
 		os.system(cmd)
 		# PPDSP_utils.run_uwrmaxsat(cmd, log_file, time_limit)

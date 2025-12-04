@@ -166,12 +166,10 @@ class PPDSP_MIP(PPDSP_reform):
 				)
 
 	def mipEq10(self):
-		bigM = max(v[0] for v in self.vehicleList)
-		for i in range(self.lenOfRequest):
-			bigM += self.requestList[i][1]
-		print(f"bigM @ Eq.10: {bigM}")
-
+		total_demand = sum(self.requestList[r][1] for r in range(self.lenOfRequest))
 		for i in range(self.lenOfVehicle):
+			cap = self.vehicleList[i][0]
+			bigM = cap + min(cap, total_demand)
 			for j in range(1 + self.lenOfLocation):
 				for k in range(self.lenOfLocation):
 					if k != j:
@@ -323,6 +321,43 @@ class PPDSP_MIP(PPDSP_reform):
 			self.cpx.parameters.timelimit.set(time_limit)
 
 		self.cpx.parameters.threads.set(1)
+
+		# Read assumption file if exists, and set MIP start
+		assumption_file = self.insName + ".lp.asp"
+		if assumption_file and False:
+			print(f"[CPLEX] Reading assumption from {assumption_file} ...")
+			lits = PPDSP_utils.read_assumption_literals(assumption_file)
+
+			if lits:
+				ind = []
+				val = []
+				# 1. Check xVar
+				for i in range(self.lenOfVehicle):
+					for j in range(len(self.xVarList[i])):
+						for k in range(len(self.xVarList[i][j])):
+							vid = self.xVarList[i][j][k]
+							if vid in lits:
+								ind.append(f"x{vid}")
+								val.append(1.0)
+							elif -vid in lits:
+								ind.append(f"x{vid}")
+								val.append(0.0)
+				# 2. Check yVar
+				for i in range(self.lenOfRequest):
+					for j in range(self.lenOfVehicle):
+						vid = self.yVarList[i][j]
+						if vid in lits:
+							ind.append(f"y{vid}")
+							val.append(1.0)
+						elif -vid in lits:
+							ind.append(f"y{vid}")
+							val.append(0.0)
+				if ind:
+					print(f"[CPLEX] Applying MIP Start with {len(ind)} variables.")
+					self.cpx.MIP_starts.add(
+						cplex.SparsePair(ind=ind, val=val),
+						self.cpx.MIP_starts.effort_level.auto
+					)
 
 		log_file = f"{self.insName}.lp.out"
 		with open(log_file, "w") as f:

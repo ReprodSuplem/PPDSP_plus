@@ -1,5 +1,7 @@
 # ppdsp_reform_utils.py
 
+from z3 import *
+
 class PPDSP_utils:
 
 	# ----------------------------
@@ -39,6 +41,35 @@ class PPDSP_utils:
 				self.id2Var[vid] = ('y', r, t)
 
 	# ----------------------------
+	# Get Z3 BoolRef from varID
+	# ----------------------------
+	@staticmethod
+	def get_z3_var(solver_instance, vid):
+		"""
+		Given an integer varID, return the corresponding Z3 BoolRef object.
+		Returns None if not found or not an x/y variable.
+		"""
+		# Ensure mapping exists
+		if solver_instance.id2Var is None:
+			PPDSP_utils.buildVarIndexMap(solver_instance)
+			
+		abs_id = abs(vid)
+		if abs_id not in solver_instance.id2Var:
+			return None
+			
+		info = solver_instance.id2Var[abs_id]
+		v_type = info[0]
+		
+		if v_type == 'x':
+			t, o, d = info[1], info[2], info[3]
+			return solver_instance.smt2x[t][o][d]
+		elif v_type == 'y':
+			r, t = info[1], info[2]
+			return solver_instance.smt2y[r][t]
+			
+		return None
+
+	# ----------------------------
 	# Extract model (only xy domain)
 	# ----------------------------
 	@staticmethod
@@ -46,25 +77,18 @@ class PPDSP_utils:
 		return [i for i in model if 0 < i <= self.getLastYVarID()]
 
 	@staticmethod
-	def extractXYModel_z3(self, model):
-		from z3 import is_true
-		
+	def extractXYModel_z3(self, model):		
 		if self.id2Var is None:
 			PPDSP_utils.buildVarIndexMap(self)
 		xy_model = []
-		for vid, info in self.id2Var.items():
-			vtype = info[0]
-			if vtype == 'x':
-				_, t, o, d = info
-				z3v = self.smt2x[t][o][d]
-			elif vtype == 'y':
-				_, r, t = info
-				z3v = self.smt2y[r][t]
-			else:
-				continue
-			val = model.evaluate(z3v, model_completion=True)
-			if is_true(val):
-				xy_model.append(vid)
+		# Iterate over all registered variables
+		for vid in self.id2Var.keys():
+			# Reuse the helper function
+			z3v = PPDSP_utils.get_z3_var(self, vid)
+			if z3v is not None:
+				val = model.evaluate(z3v, model_completion=True)
+				if is_true(val):
+					xy_model.append(vid)
 		xy_model.sort()
 		return xy_model
 
@@ -179,21 +203,14 @@ class PPDSP_utils:
 	# ----------------------------
 	@staticmethod
 	def learntClause_z3(self, learnt_clause):
-		from z3 import Bool, Not
 		z3_clause = []
 		for lit in learnt_clause:
-			vid = abs(lit)
-			vtype = self.id2Var[vid][0]
-			if lit > 0:
-				if vtype == 'x':
-					z3_clause.append(Bool(f"x{vid}"))
+			z3_var = PPDSP_utils.get_z3_var(self, abs(lit))
+			if z3_var is not None:
+				if lit > 0:
+					z3_clause.append(z3_var)
 				else:
-					z3_clause.append(Bool(f"y{vid}"))
-			else:
-				if vtype == 'x':
-					z3_clause.append(Not(Bool(f"x{vid}")))
-				else:
-					z3_clause.append(Not(Bool(f"y{vid}")))
+					z3_clause.append(Not(z3_var))
 		return z3_clause
 
 	# ----------------------------
@@ -386,3 +403,28 @@ class PPDSP_utils:
 			return None # Treat as timeout/unknown
 			
 		return result_container['status']
+
+	# ----------------------------
+	# Assumption literals reader
+	# ----------------------------
+	@staticmethod
+	def read_assumption_literals(filename):
+		"""
+		Read assumption literals from a file.
+		File format: space separated integers (e.g., "1 -2 3 ...")
+		Returns: set of integer literals
+		"""
+		lits = set()
+		try:
+			with open(filename, 'r') as f:
+				content = f.read()
+				tokens = content.replace('\n', ' ').split()
+				for t in tokens:
+					try:
+						lit = int(t)
+						if lit != 0: lits.add(lit) # Add non-zero literals only
+					except ValueError:
+						pass # Ignore non-integer content (e.g., 'v')
+		except FileNotFoundError:
+			print(f"[Utils] Assumption file not found: {filename}")
+		return lits
