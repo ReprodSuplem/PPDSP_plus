@@ -322,6 +322,24 @@ class PPDSP_MIP(PPDSP_reform):
 
 		self.cpx.parameters.threads.set(1)
 
+		''' Do NOT use backbone branching (not good)
+		# Set branching priority
+		print("[CPLEX] Setting branching priorities (x, y: High, others: Low)...")
+		high_priority_vars = []
+		# xVars
+		for i in range(self.lenOfVehicle):
+			for j in range(len(self.xVarList[i])):
+				for k in range(len(self.xVarList[i][j])):
+					vid = self.xVarList[i][j][k]
+					high_priority_vars.append((f"x{vid}", 100, self.cpx.order.branch_direction.up))
+		# yVars
+		for i in range(self.lenOfRequest):
+			for j in range(self.lenOfVehicle):
+				vid = self.yVarList[i][j]
+				high_priority_vars.append((f"y{vid}", 200, self.cpx.order.branch_direction.up))
+		self.cpx.order.set(high_priority_vars)
+		'''
+
 		# Read assumption file if exists, and set MIP start
 		assumption_file = self.insName + ".lp.asp"
 		if assumption_file and False:

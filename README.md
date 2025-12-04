@@ -140,7 +140,7 @@ python main.py gen ./burma14.tsp
 python main.py maxsat p2 burma14 7 2 4
 ```
 
-## 🧠 Citation
+## 📃 Citation
 This implementation is inspired by the paper:
 
 - ["A case study of the profit-maximizing multi-vehicle pickup and delivery selection problem for the road networks with the integratable nodes."](https://doi.org/10.1007/978-3-031-36024-4_35) In _ICCS 2023_.

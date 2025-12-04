@@ -125,6 +125,26 @@ int main(int argc, char** argv)
         if (opt_verbosity >= 1) reportf("Parsing MaxSAT file...\n");
         parse_WCNF_file(opt_input, *pb_solver);
         if (opt_convert == ct_Undef) opt_convert = ct_Sorters;
+
+        /* Do NOT use backbone branching (not good)
+        // PPDSP: backbone branching - only allow xVar & yVar to be decision variables
+        if (opt_ppdsp_lastY > 0) {
+            int limit = opt_ppdsp_lastY; 
+            int nVars = pb_solver->sat_solver.nVars();
+            int disabled_count = 0;
+            
+            for (int v = 0; v < nVars; v++) {
+                // When varID: v+1 > lastY
+                if (v >= limit) {
+                    pb_solver->sat_solver.setDecisionVar(v, false); 
+                    disabled_count++;
+                }
+            }
+            if (opt_verbosity >= 1)
+                reportf("[UWrMaxSAT] Backbone branching active. Decision disabled on %d auxiliary vars (ID > %d).\n", disabled_count, limit);
+        }
+        */
+
         if (opt_maxsat_msu) {
             if (opt_seq_thres < 0) opt_seq_thres = 4;
             pb_solver->maxsat_solve(convert(opt_command));
