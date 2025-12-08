@@ -132,6 +132,28 @@ class PPDSP_utils:
 		return veh_routes
 
 	# ----------------------------
+	# Grouping homogeneous vehicles
+	# ----------------------------
+	@staticmethod
+	def get_sbc_groups(vehicleList):
+		"""
+		Group vehicles by Capacity ONLY (as requested).
+		Returns: dict {capacity: [v1, v2, v3...]}
+		"""
+		groups = {}
+		for t, veh in enumerate(vehicleList):
+			cap = veh[0] # Only Capacity
+			# cost = veh[1] # Ignored
+			key = cap
+			
+			if key not in groups:
+				groups[key] = []
+			groups[key].append(t)
+			
+		# Filter groups with < 2 vehicles (no symmetry to break)
+		return {k: v for k, v in groups.items() if len(v) >= 2}
+
+	# ----------------------------
 	# Check overload and return learnt clause
 	# ----------------------------
 	@staticmethod
@@ -308,6 +330,15 @@ class PPDSP_utils:
 			for t in range(self.lenOfVehicle):
 				cap, cost = self.vehicleList[t]
 				f.write(f"{t} {cap} {cost}\n")
+
+			# vehicleGroups
+			f.write("# vehicleGroups\n")
+			groups = PPDSP_utils.get_sbc_groups(self.vehicleList)
+			gid = 0
+			for key, vehs in groups.items():
+				line = f"{gid} {len(vehs)} " + " ".join(map(str, vehs))
+				f.write(line + "\n")
+				gid += 1
 
 			print(f"[UWrMaxSAT] meta exported to {filename}")
 

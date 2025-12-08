@@ -30,7 +30,9 @@ public:
     std::vector<std::vector<int>> requestList;            // [r] = [profit, size, pickup, drop]
     std::vector<std::vector<int>> vehicleList;            // [t] = [capacity, cost_coeff]
 
-    std::unordered_map<int, VarInfo> id2Var; // varID -> (x/y, indices)
+    std::unordered_map<int, VarInfo> id2Var;              // varID -> (x/y, indices)
+
+    std::vector<std::vector<int>> identicalVehicles;      // [i]: grouped by identical vehicle capacity
 
     int getLastYVarID() const {
         int r = lenOfRequest - 1;
@@ -61,7 +63,8 @@ public:
         int vehID,
         const std::vector<std::pair<int,int>>& route,
         const std::vector<int>& assigned_reqs,
-        Minisat::vec<Minisat::Lit>& learnt_clause
+        std::vector<std::vector<Minisat::Lit>>& learnt_clauses,
+        bool enable_broadcast = false
     );
 };
 

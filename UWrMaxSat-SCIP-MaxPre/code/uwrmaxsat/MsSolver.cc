@@ -817,7 +817,7 @@ void MsSolver::maxsat_solve(solve_Command cmd)
                     model[var(soft_cls[i].snd->last())] = !sign(soft_cls[i].snd->last());
             Int goalvalue = evalGoal(soft_cls, model, soft_unsat) + fixed_goalval;
 
-            // ================== PPDSP lazy capacity cut ==================
+            // ================== PPDSP lazy Benders cut ==================
             if (ppdsp_instance != nullptr){
                 // Construct fullModel manually
                 std::vector<int> fullModel;
@@ -840,20 +840,31 @@ void MsSolver::maxsat_solve(solve_Command cmd)
                 bool violated = false;
 
                 for (int t=0; t < ppdsp_instance->lenOfVehicle; t++){
-                    Minisat::vec<Minisat::Lit> clause;
+                    bool use_broadcast = (ppdsp_instance->lenOfVehicle >= 10);
+                    std::vector<std::vector<Minisat::Lit>> learnt_clauses;
 
                     if (PPDSP_utils::checkOverload(
                             ppdsp_instance,
                             t,
                             vehRoutes[t],
                             vehReqs[t],
-                            clause
+                            learnt_clauses,
+                            use_broadcast //false
                     )){
                         violated = true;
                         // if (opt_verbosity >= 1) cout << "[UWrMaxSAT] Vehicle " << t << " overload detected." << endl;
 
-                        sat_solver.addClause(clause);
-                        clause.clear();
+                        // Iterate and add clauses to solver
+                        for (const auto& std_clause : learnt_clauses) {
+                            // Convert std::vector -> Minisat::vec for the solver API
+                            Minisat::vec<Minisat::Lit> minisat_clause;
+                            minisat_clause.capacity(std_clause.size());
+                            for (const auto& lit : std_clause) {
+                                minisat_clause.push(lit);
+                            }
+                            // Add to solver
+                            sat_solver.addClause(minisat_clause);
+                        }
                         break; // go back to SAT loop
                     }
                 }
@@ -866,7 +877,7 @@ void MsSolver::maxsat_solve(solve_Command cmd)
                 // Otherwise ~ feasible under capacity
                 // Here you can update best/max model
             }
-            // ================== PPDSP lazy capacity cut ==================
+            // ================== PPDSP lazy Benders cut ==================
 
             extern bool opt_satisfiable_out;
             if (goalvalue < best_goalvalue || opt_output_top > 0 && goalvalue == best_goalvalue) {

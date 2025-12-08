@@ -102,7 +102,8 @@ bool PPDSP_utils::checkOverload(
     int vehID,
     const std::vector<std::pair<int,int>>& route,
     const std::vector<int>& assigned_reqs,
-    Minisat::vec<Minisat::Lit>& learnt_clause
+    std::vector<std::vector<Minisat::Lit>>& learnt_clauses,
+    bool enable_broadcast
 ){
     if (route.empty()) return false;
 
@@ -139,7 +140,7 @@ bool PPDSP_utils::checkOverload(
 
         // ---- Overload found ----
         if (load > capacity){
-            learnt_clause.clear();
+            learnt_clauses.clear();
 
             // 1. Collect onboard requests
             vector<int> onboard_reqs;
@@ -172,25 +173,37 @@ bool PPDSP_utils::checkOverload(
             }
 
             // 5. Build learnt clause
-            // yLits (negated y-vars) for minimal conflict requests
-            for (int r : minimal_conflict){
-                int vid = inst->yVarList[r][vehID];
-                learnt_clause.push(~Minisat::mkLit(vid - 1));
+            const auto& group = inst->identicalVehicles[vehID];
+            const std::vector<int>* target_vehicles = nullptr;
+            std::vector<int> single_vehicle_group;
+
+            if (enable_broadcast) {
+                target_vehicles = &group;
+            } else {
+                single_vehicle_group.push_back(vehID);
+                target_vehicles = &single_vehicle_group;
             }
 
-            // xLits (only prefix origins → dropNode)
-            for (int r : minimal_conflict){
-                int dropNode = drop[r];
-                for (int o : prefix_origins){
-                    int vid = inst->xVarList[vehID][o][dropNode];
-                    learnt_clause.push(Minisat::mkLit(vid - 1));
+            for (int targetID : *target_vehicles) {
+                std::vector<Minisat::Lit> clause;
+                // yLits (negated y-vars) for minimal conflict requests
+                for (int r : minimal_conflict){
+                    int vid = inst->yVarList[r][targetID];
+                    if(vid!=0) clause.push_back(~Minisat::mkLit(vid - 1));
                 }
+                // xLits (only prefix origins → dropNode)
+                for (int r : minimal_conflict){
+                    int dropNode = drop[r];
+                    for (int o : prefix_origins){
+                        int vid = inst->xVarList[targetID][o][dropNode];
+                        if(vid!=0) clause.push_back(Minisat::mkLit(vid - 1));
+                    }
+                }
+                learnt_clauses.push_back(std::move(clause));
             }
-
             return true;
         }
     }
-
     return false;
 }
 
@@ -215,6 +228,8 @@ bool loadPPDSPInstance(const char* filename, PPDSP_Instance& inst)
                             std::vector<int>(4, 0));
     inst.vehicleList.assign(inst.lenOfVehicle,
                             std::vector<int>(2, 0));
+    inst.identicalVehicles.assign(inst.lenOfVehicle, {});
+    for(int i=0; i<inst.lenOfVehicle; ++i) inst.identicalVehicles[i].push_back(i);
 
     std::string tag;
     std::string section = "";
@@ -251,6 +266,21 @@ bool loadPPDSPInstance(const char* filename, PPDSP_Instance& inst)
             double cap, cost;
             in >> cap >> cost;
             inst.vehicleList[t] = {(int)cap, (int)cost};
+        }
+        else if (section == "vehicleGroups") {
+            // int gid = std::stoi(tag);
+            int count;
+            in >> count;
+            std::vector<int> groupMembers;
+            for(int k=0; k<count; ++k) {
+                int vid;
+                in >> vid;
+                groupMembers.push_back(vid);
+            }
+            // Update the map for all members
+            for(int vid : groupMembers) {
+                inst.identicalVehicles[vid] = groupMembers;
+            }
         }
     }
 

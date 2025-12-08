@@ -254,21 +254,13 @@ class PPDSP_MIP(PPDSP_reform):
 
 	def mipSbc(self):
 		"""
-		SBC for Homogeneous Fleet (Grouped).
+		SBC for Homogeneous Fleet (Grouped by capacity).
 		Constraint: y[r][follower] <= Sum(y[prev_r][leader] for prev_r < r)
 		"""
-		groups = {}
-		for t in range(self.lenOfVehicle):
-			cap = self.vehicleList[t][0]
-			cost = self.vehicleList[t][1]
-			key = (cap, cost)
-			if key not in groups:
-				groups[key] = []
-			groups[key].append(t)
-			
+		groups = PPDSP_utils.get_sbc_groups(self.vehicleList)
+		sbc_count = 0
 		# Chain constraints within each group of homogeneous vehicles
 		for key, veh_ids in groups.items():
-			if len(veh_ids) < 2: continue
 			# v[0] <- v[1] <- v[2] ...
 			for i in range(len(veh_ids) - 1):
 				leader = veh_ids[i]
@@ -286,6 +278,8 @@ class PPDSP_MIP(PPDSP_reform):
 						senses=['L'],
 						rhs=[0.0]
 					)
+					sbc_count += 1
+		print(f"[CPLEX] Added {sbc_count} SBC inequalities.")
 
 	def genMipFormular(self):
 		self.genXVarList()

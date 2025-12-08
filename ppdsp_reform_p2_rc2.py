@@ -209,34 +209,17 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 	def genHardClauseForSbc(self):
 		"""
 		SBC (Symmetry Breaking Constraints) for Homogeneous Fleet (Auto-Grouping version).
-		1. Groups vehicles by (capacity, cost).
-		2. Applies lexicographic ordering within each group:
+		Applies lexicographic ordering within each group:
 			For group [v1, v2, v3...]:
 				- v1 is 'leader' of v2
 				- v2 is 'leader' of v3
 		Constraint: If vehicle 'follower' uses request r,
 		vehicle 'leader' must have served a request < r.
 		"""
-		# 1. Auto-grouping: find all homogeneous vehicles
-		# Key: (capacity, cost), Value: [vehicle_id_1, vehicle_id_2, ...]
-		groups = {}
-		for t in range(self.lenOfVehicle):
-			# Convert list to tuple for dict key
-			cap = self.vehicleList[t][0]
-			cost = self.vehicleList[t][1]
-			key = (cap, cost)
-			
-			if key not in groups:
-				groups[key] = []
-			groups[key].append(t)
-			
-		# 2. Apply chain constraints within each group of homogeneous vehicles
+		groups = PPDSP_utils.get_sbc_groups(self.vehicleList)
 		sbc_count = 0
+		# Apply chain constraints within each group of homogeneous vehicles
 		for key, veh_ids in groups.items():
-			if len(veh_ids) < 2:
-				continue # Only one vehicle of this type, no SBC needed
-			# print(f"[SBC] Group {key}: vehicles {veh_ids}")
-
 			# Chain constraints: v[0] is leader of v[1], v[1] is leader of v[2], ...
 			for i in range(len(veh_ids) - 1):
 				leader = veh_ids[i]
