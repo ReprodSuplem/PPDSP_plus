@@ -33,6 +33,8 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 		for i in range(self.lenOfVehicle):
 			for j in range(1+self.lenOfLocation):
 				for k in range(1+self.lenOfLocation):
+					if j == k: continue
+					if self.adjMatrx[j][k] == 0: continue
 					cost.append(self.my_round_int(self.vehicleList[i][1] * self.locaList[j][k]) * If(self.smt2x[i][j][k], 1, 0))
 		self.obj = Int("obj")
 		self.smt2Opt.add(self.obj == Sum(profit) - Sum(cost))
@@ -55,7 +57,8 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 				xVars = []
 				for k in range(1 + self.lenOfLocation):
 					if k != self.requestList[i][2] and k != self.requestList[i][3]:
-						xVars.append(self.smt2x[j][k][self.requestList[i][2]])
+						if self.adjMatrx[k][self.requestList[i][2]] != 0:
+							xVars.append(self.smt2x[j][k][self.requestList[i][2]])
 				if mode == 1:
 					self.smt2Opt.add(
 						If(self.smt2y[i][j], 1, 0) <= Sum([If(x, 1, 0) for x in xVars])
@@ -77,7 +80,8 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 				xVars = []
 				for k in range(self.lenOfLocation):
 					if k != self.requestList[i][3]:
-						xVars.append(self.smt2x[j][k][self.requestList[i][3]])
+						if self.adjMatrx[k][self.requestList[i][3]] != 0:
+							xVars.append(self.smt2x[j][k][self.requestList[i][3]])
 				if mode == 1:
 					self.smt2Opt.add(
 						If(self.smt2y[i][j], 1, 0) <= Sum([If(x, 1, 0) for x in xVars])
@@ -96,8 +100,8 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 	def smt2Eq6(self):
 		for i in range(self.lenOfVehicle):
 			for j in range(1 + self.lenOfLocation):
-				out_flow = [If(self.smt2x[i][j][k], 1, 0) for k in range(1 + self.lenOfLocation)]
-				in_flow = [If(self.smt2x[i][k][j], 1, 0) for k in range(1 + self.lenOfLocation)]
+				out_flow = [If(self.smt2x[i][j][k], 1, 0) for k in range(1 + self.lenOfLocation) if k != j and self.adjMatrx[j][k] != 0]
+				in_flow = [If(self.smt2x[i][k][j], 1, 0) for k in range(1 + self.lenOfLocation) if k != j and self.adjMatrx[k][j] != 0]
 				self.smt2Opt.add(Sum(out_flow) - Sum(in_flow) == 0)
 
 	def smt2Eq7(self):
@@ -115,8 +119,8 @@ class PPDSP_SMT2_p4(PPDSP_reform):
 		for i in range(self.lenOfVehicle):
 			for j in range(self.lenOfLocation):
 				for k in range(self.lenOfLocation):
-					if k == j:
-						continue
+					if k == j: continue
+					if self.adjMatrx[j][k] == 0: continue
 					u_o = self.smt2u[i][j]
 					u_d = self.smt2u[i][k]
 					x_od = self.smt2x[i][j][k]

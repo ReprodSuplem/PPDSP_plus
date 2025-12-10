@@ -7,6 +7,7 @@ from ppdsp_reform_p1_z3 import PPDSP_SMT2_p1
 from ppdsp_reform_p4_z3 import PPDSP_SMT2_p4
 from ppdsp_reform_p1_rc2 import PPDSP_MaxSAT_p1
 from ppdsp_reform_p2_rc2 import PPDSP_MaxSAT_p2
+from ppdsp_reform_p3_rc2 import PPDSP_MaxSAT_p3
 from ppdsp_reform_p4_rc2 import PPDSP_MaxSAT_p4
 
 if len(sys.argv) < 2:
@@ -59,6 +60,8 @@ else:
 			solver = PPDSP_MaxSAT_p1(tsplib, request, vehicle, knn)
 		elif method == "p2":
 			solver = PPDSP_MaxSAT_p2(tsplib, request, vehicle, knn)
+		elif method == "p3":
+			solver = PPDSP_MaxSAT_p3(tsplib, request, vehicle, knn)
 		elif method == "p4":
 			solver = PPDSP_MaxSAT_p4(tsplib, request, vehicle, knn)
 		else:

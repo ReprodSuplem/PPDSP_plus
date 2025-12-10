@@ -40,8 +40,9 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 		for i in range(self.lenOfVehicle):
 			for j in range(1+self.lenOfLocation):
 				for k in range(1+self.lenOfLocation):
-					#if k != j:
-					self.wcnf.append([-self.xVarList[i][j][k]], weight = self.my_round_int(self.vehicleList[i][1]*self.locaList[j][k]))
+					if k != j:
+						if self.adjMatrx[j][k] == 0: continue
+						self.wcnf.append([-self.xVarList[i][j][k]], weight = self.my_round_int(self.vehicleList[i][1]*self.locaList[j][k]))
 
 	def genHardClauseForEq3(self):
 		for i in range(self.lenOfRequest):
@@ -56,7 +57,8 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 				varList = [-self.yVarList[i][j]]
 				for k in range(1+self.lenOfLocation):
 					if k != self.requestList[i][2] and k != self.requestList[i][3]:
-						varList.append(self.xVarList[j][k][self.requestList[i][2]])
+						if self.adjMatrx[k][self.requestList[i][2]] != 0:
+							varList.append(self.xVarList[j][k][self.requestList[i][2]])
 				self.wcnf.append(varList)
 
 	def genHardClauseForEq5(self):
@@ -65,7 +67,8 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 				varList = [-self.yVarList[i][j]]
 				for k in range(self.lenOfLocation):
 					if k != self.requestList[i][3]:
-						varList.append(self.xVarList[j][k][self.requestList[i][3]])
+						if self.adjMatrx[k][self.requestList[i][3]] != 0:
+							varList.append(self.xVarList[j][k][self.requestList[i][3]])
 				self.wcnf.append(varList)
 
 	def genHardClauseForEq6(self):
@@ -74,8 +77,10 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 				litList1 = []
 				litList2 = []
 				for k in range(1+self.lenOfLocation):
-					litList1.append(self.xVarList[i][j][k])
-					litList2.append(self.xVarList[i][k][j])
+					if k != j and self.adjMatrx[j][k] != 0:
+						litList1.append(self.xVarList[i][j][k])
+					if k != j and self.adjMatrx[k][j] != 0:
+						litList2.append(self.xVarList[i][k][j])
 				cnf_obj = self.twoSumsEqvt(litList1, litList2)
 				for clause in cnf_obj:
 					self.wcnf.append(clause)
@@ -90,26 +95,28 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 				self.atMostOne(varList)
 
 	# MTZ-SEC
-	def genHardClauseForEq8_1(self):
+	def genHardClauseForEq8_b1(self):
 		for i in range(self.lenOfVehicle):
 			for j in range(self.lenOfLocation):
 				for k in range(self.lenOfLocation):
 					if k != j:
+						if self.adjMatrx[j][k] == 0: continue # k-NN pruning
 						clause = [-self.xVarList[i][j][k]] + [l for l in self.nuVarList[i][k]]
 						self.wcnf.append(clause)
 
-	def genHardClauseForEq8_2(self):
+	def genHardClauseForEq8_b2(self):
 		for i in range(self.lenOfVehicle):
 			for j in range(self.lenOfLocation):
 				for k in range(self.lenOfLocation):
 					if k != j:
+						if self.adjMatrx[j][k] == 0: continue # k-NN pruning
 						for l in range(self.lenOfLocation): # p: from 0 to |V|-2
 							for m in range(self.lenOfLocation):
 								if m != l - 1: # p': from 0 to |V|-2 and inconsistent with p-1
 									clause = [-self.xVarList[i][j][k], -self.nuVarList[i][k][l], -self.nuVarList[i][j][m]]
 									self.wcnf.append(clause)
 
-	def genHardClauseForEq9_1(self):
+	def genHardClauseForEq9_b(self):
 		for i in range(self.lenOfRequest):
 			for j in range(self.lenOfVehicle):
 				for k in range(self.lenOfLocation): # p: from 0 to |V|-2
@@ -140,6 +147,7 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 			for j in range(1 + self.lenOfLocation): # j is 'o'
 				for k in range(self.lenOfLocation): # k is 'd'
 					if k != j:
+						if self.adjMatrx[j][k] == 0: continue
 						litList = []
 						weightList = []
 						equalBound = 0
@@ -247,9 +255,9 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 		self.genHardClauseForEq5()
 		self.genHardClauseForEq6()
 		self.genHardClauseForEq7()
-		self.genHardClauseForEq8_1()
-		self.genHardClauseForEq8_2()
-		self.genHardClauseForEq9_1()
+		self.genHardClauseForEq8_b1()
+		self.genHardClauseForEq8_b2()
+		self.genHardClauseForEq9_b()
 		self.genHardClauseForEq11()
 		#self.printHVarLits()
 		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.10

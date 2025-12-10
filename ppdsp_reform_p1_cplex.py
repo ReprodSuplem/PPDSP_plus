@@ -51,6 +51,8 @@ class PPDSP_MIP(PPDSP_reform):
 		for i in range(self.lenOfVehicle):
 			for j in range(1 + self.lenOfLocation):
 				for k in range(1 + self.lenOfLocation):
+					if j == k: continue
+					if self.adjMatrx[j][k] == 0: continue
 					var_id = self.xVarList[i][j][k]
 					cost = -self.my_round_int(self.vehicleList[i][1] * self.locaList[j][k])
 					obj_terms.append((f"x{var_id}", cost))
@@ -74,6 +76,7 @@ class PPDSP_MIP(PPDSP_reform):
 				ind, val = [], []
 				for k in range(1 + self.lenOfLocation):
 					if k != self.requestList[i][2] and k != self.requestList[i][3]:
+						if self.adjMatrx[k][self.requestList[i][2]] == 0: continue
 						ind.append("x" + str(self.xVarList[j][k][self.requestList[i][2]]))
 						val.append(1.0)
 				ind.append("y" + str(self.yVarList[i][j]))
@@ -90,6 +93,7 @@ class PPDSP_MIP(PPDSP_reform):
 				ind, val = [], []
 				for k in range(self.lenOfLocation):
 					if k != self.requestList[i][3]:
+						if self.adjMatrx[k][self.requestList[i][3]] == 0: continue
 						ind.append("x" + str(self.xVarList[j][k][self.requestList[i][3]]))
 						val.append(1.0)
 				ind.append("y" + str(self.yVarList[i][j]))
@@ -105,12 +109,13 @@ class PPDSP_MIP(PPDSP_reform):
 			for j in range(1 + self.lenOfLocation):
 				ind, val = [], []
 				for k in range(1 + self.lenOfLocation):
-					if k == j:
-						continue
-					ind.append("x" + str(self.xVarList[i][j][k]))
-					val.append(1.0)
-					ind.append("x" + str(self.xVarList[i][k][j]))
-					val.append(-1.0)
+					if k == j: continue
+					if self.adjMatrx[j][k] != 0:
+						ind.append("x" + str(self.xVarList[i][j][k]))
+						val.append(1.0)
+					if self.adjMatrx[k][j] != 0:
+						ind.append("x" + str(self.xVarList[i][k][j]))
+						val.append(-1.0)
 				self.cpx.linear_constraints.add(
 					lin_expr=[SparsePair(ind=ind, val=val)],
 					senses=['E'],
@@ -137,6 +142,7 @@ class PPDSP_MIP(PPDSP_reform):
 			for j in range(self.lenOfLocation):
 				for k in range(self.lenOfLocation):
 					if k != j:
+						if self.adjMatrx[j][k] == 0: continue
 						ind = [
 							"u" + str(self.uVarList[i][j]),
 							"u" + str(self.uVarList[i][k]),
@@ -173,6 +179,7 @@ class PPDSP_MIP(PPDSP_reform):
 			for j in range(1 + self.lenOfLocation):
 				for k in range(self.lenOfLocation):
 					if k != j:
+						if self.adjMatrx[j][k] == 0: continue
 						ind = ["h" + str(self.hVarList[i][j]),
 							"h" + str(self.hVarList[i][k]),
 							"x" + str(self.xVarList[i][j][k])]

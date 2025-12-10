@@ -1,19 +1,19 @@
-# ppdsp_reform_p4_rc2.py
+# ppdsp_reform_p3_rc2.py
 
 from ppdsp_reform_ins_gen import PPDSP_reform
 from ppdsp_reform_utils import PPDSP_utils
 from pysat.pb import *
 from pysat.formula import *
-from pysat.card import CardEnc
 
-class PPDSP_MaxSAT_p4(PPDSP_reform):
+class PPDSP_MaxSAT_p3(PPDSP_reform):
 	def __init__(self, tsplib, request, vehicle, knn):
 		super().__init__(tsplib, request, vehicle, knn)
 		self.knn = int(knn)
 		self.wcnf = WCNF()
 		self.cnf = CNF()
 		self.vpool = None
-		self.insName = f"p4_{tsplib}_r{request}v{vehicle}k{knn}"
+		self.hVarLits = [[[] for j in range(len(self.hVarList[i]))] for i in range(len(self.hVarList))]
+		self.insName = f"p3_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def atLeastOne(self, varList):
 		self.wcnf.append(varList)
@@ -165,6 +165,55 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 				clause_boundary = [-self.yVarList[i][t], self.nuVarList[t][pickup][last_bit_idx]]
 				self.wcnf.append(clause_boundary)
 
+	def resetVarIDforMaxSAT(self):
+		self.varID = self.hVarList[0][0] - 1 # Reset to varID to 1st variable 'h^t_v'
+
+	def genHardClauseForEq11(self): # Literals allocation for Eq.10
+		self.resetVarIDforMaxSAT()
+		for i in range(self.lenOfVehicle):
+			for j in range(1 + self.lenOfLocation):
+				if j == self.lenOfLocation:
+					continue # h^t_{depot} = 0
+				for k in range(int(self.vehicleList[i][0])):
+					self.hVarLits[i][j].append(self.newVarID())
+
+	def printHVarLits(self):
+		for i in range(len(self.hVarLits)):
+			for j in range(len(self.hVarLits[i])):
+				print('h^{{{0}}}{1}_[{2}]'.format(i,'v', self.hVarList[i][j]))
+				print(self.hVarLits[i][j])
+
+	def genHardClauseForEq10(self):
+		for i in range(self.lenOfVehicle):
+			for j in range(1 + self.lenOfLocation): # j is 'o'
+				for k in range(self.lenOfLocation): # k is 'd'
+					if k != j:
+						if self.adjMatrx[j][k] == 0: continue
+						litList = []
+						weightList = []
+						equalBound = 0
+						for l in range(self.lenOfRequest):
+							if self.requestList[l][2] == k:
+								litList.append(self.yVarList[l][i])
+								weightList.append(self.requestList[l][1])
+							elif self.requestList[l][3] == k:
+								litList.append(-self.yVarList[l][i])
+								weightList.append(self.requestList[l][1])
+								equalBound += self.requestList[l][1]
+
+						tmpListO = [1 for l in range(len(self.hVarLits[i][j]))]
+						tmpListD = [1 for l in range(len(self.hVarLits[i][k]))]
+						equalBound += len(self.hVarLits[i][k])
+						litList += self.hVarLits[i][j] + [-1 * l for l in self.hVarLits[i][k]]
+						weightList += tmpListO + tmpListD
+
+						#print("Current max varID:", self.vpool.top) # Show current max varID in vpool
+
+						cnf_obj = PBEnc.equals(lits = litList, weights = weightList, bound = equalBound, vpool = self.vpool, encoding = EncType.best)
+						for clause in cnf_obj.clauses:
+							self.cnf.append([-self.xVarList[i][j][k]] + clause, update_vpool=True)
+		#print(self.cnf.clauses)
+
 	def genHardClauseForKnn(self): # Adding k-NN pruning constraints
 		for t in range(self.lenOfVehicle):
 			for i in range(len(self.adjMatrx)):
@@ -239,6 +288,7 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		self.genXVarList()
 		self.genYVarList()
 		self.genNuVarList()
+		self.genHVarList()
 
 		self.genSoftClause()
 		self.genHardClauseForEq3()
@@ -249,24 +299,23 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		self.genHardClauseForDomainTransitive()
 		self.genHardClauseForEq8_c()
 		self.genHardClauseForEq9_c()
+		self.genHardClauseForEq11()
+		#self.printHVarLits()
+		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.10
+		self.genHardClauseForEq10()
 		self.genHardClauseFoRec() if self.knn == 0 else self.genHardClauseForKnn()
 		self.genHardClauseForSbc()
 
 		print(f"[rc2] Generating instance: {self.insName}.wcnf ...")
 		self.wcnf.extend(self.cnf)
 		self.wcnf.to_file(self.insName + ".wcnf")
-		PPDSP_utils.export_meta(self, self.insName + ".meta")
 
 	def solve(self, verbose=1, time_limit=5):
 		wcnf_file = self.insName + ".wcnf"
 		lastY = self.getLastYVarID()
-		meta_file = self.insName + ".meta"
-		assumption_file = wcnf_file + ".asp"
 		log_file  = wcnf_file + ".out"
 
-		# Run uwrmaxsat with meta file and assumption file
-		# -ppdsp-assume={assumption_file}
-		cmd = f"stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} -ppdsp={meta_file} {wcnf_file} | tee {log_file}"
+		cmd = f"stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} {wcnf_file} | tee {log_file}"
 		print(f"[UWrMaxSAT] Running command:\n  {cmd}")
 		os.system(cmd)
 		# PPDSP_utils.run_uwrmaxsat(cmd, log_file, time_limit)
@@ -280,7 +329,7 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 					for lit in line.split()[1:]: # Ignore 1st char 'v'
 						if lit != "0":
 							model.append(int(lit))
-			
+
 		if not model:
 			with open(log_file, "a") as f:
 				f.write("\n[UWrMaxSAT] No solution.\n")
@@ -297,4 +346,6 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 			f.write(f"[UWrMaxSAT] OBJ: {obj_val}")
 
 		return filtered_model
+
+
 

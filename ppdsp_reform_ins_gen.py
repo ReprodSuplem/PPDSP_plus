@@ -151,12 +151,12 @@ class PPDSP_reform:
 			print(self.hVarList[i])
 
 	def getLastXVarID(self):
-		return self.xVarList[self.lenOfVehicle-1][self.lenOfLocation][self.lenOfLocation]
+		return self.xVarList[-1][-1][-1]
 
 	def getLastYVarID(self):
-		return self.yVarList[self.lenOfRequest-1][self.lenOfVehicle-1]
+		return self.yVarList[-1][-1]
 
 	def getLastNuVarID(self):
-		return self.nuVarList[self.lenOfVehicle-1][self.lenOfLocation-1][self.lenOfLocation-1]
+		return self.nuVarList[-1][-1][-1]
 
 __all__ = ["PPDSP_reform"]
