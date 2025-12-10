@@ -95,34 +95,61 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 				self.atMostOne(varList)
 
 	# MTZ-SEC
-	def genHardClauseForEq8_b1(self):
+	def genHardClauseForEq8_b(self):
+		"""
+		MTZ Constraints for Direct Encoding
+		Logic: x[j][k] -> (u[k] == p -> u[j] == p-1)
+		Clause: -x[j][k] v -nu[k][p] v nu[j][p-1]
+		"""
+		num_bits = self.lenOfLocation # |V|-1
+		last_bit_idx = num_bits - 1 # Last bit index is |V|-2
 		for i in range(self.lenOfVehicle):
 			for j in range(self.lenOfLocation):
 				for k in range(self.lenOfLocation):
 					if k != j:
 						if self.adjMatrx[j][k] == 0: continue # k-NN pruning
-						clause = [-self.xVarList[i][j][k]] + [l for l in self.nuVarList[i][k]]
-						self.wcnf.append(clause)
-
-	def genHardClauseForEq8_b2(self):
-		for i in range(self.lenOfVehicle):
-			for j in range(self.lenOfLocation):
-				for k in range(self.lenOfLocation):
-					if k != j:
-						if self.adjMatrx[j][k] == 0: continue # k-NN pruning
-						for l in range(self.lenOfLocation): # p: from 0 to |V|-2
-							for m in range(self.lenOfLocation):
-								if m != l - 1: # p': from 0 to |V|-2 and inconsistent with p-1
-									clause = [-self.xVarList[i][j][k], -self.nuVarList[i][k][l], -self.nuVarList[i][j][m]]
-									self.wcnf.append(clause)
+						# 1. Standard Chain: (p from 0 to last_bit_idx)
+						# Logic: x -> (nu[k][p] -> nu[j][p-1])
+						for p in range(num_bits):
+							clause = [-self.xVarList[i][j][k], -self.nuVarList[i][k][p]]
+							if p > 0:
+								clause.append(self.nuVarList[i][j][p-1])
+							# p=0: x -> -nu[k][0] (k cannot be first)
+							self.wcnf.append(clause)
+						# 2. Boundary Constraint (Explicit Fix):
+						# If x_jk=1, j CANNOT be at the last position (must leave room for k)
+						# Logic: x -> not nu[j][last]
+						self.wcnf.append([-self.xVarList[i][j][k], -self.nuVarList[i][j][last_bit_idx]])
 
 	def genHardClauseForEq9_b(self):
+		"""
+		Precedence Constraints for Direct Encoding
+		Logic: y[r] -> u[drop] > u[pick]
+		Includes Boundary Constraints for faster propagation.
+		"""
+		num_bits = self.lenOfLocation # |V|-1
+		last_bit_idx = num_bits - 1 # Last bit index is |V|-2
 		for i in range(self.lenOfRequest):
+			pickup = self.requestList[i][2]
+			dropoff = self.requestList[i][3]
 			for j in range(self.lenOfVehicle):
-				for k in range(self.lenOfLocation): # p: from 0 to |V|-2
-					for l in range(1 + k): # p': from 0 to p
-						clause = [-self.yVarList[i][j], -self.nuVarList[j][self.requestList[i][2]][k], -self.nuVarList[j][self.requestList[i][3]][l]]
+				# 1. Pairwise Prohibition (Standard Direct Encoding)
+				# Forbid: pick >= drop
+				# Clause: -y v -nu[drop][k] v -nu[pick][l] (where l >= k)
+				for k in range(1, num_bits): # p: from 1 to |V|-2
+					for l in range(k, num_bits - 1): # p': from p to |V|-3
+						clause = [-self.yVarList[i][j], -self.nuVarList[j][dropoff][k], -self.nuVarList[j][pickup][l]]
 						self.wcnf.append(clause)
+				# 2. Boundary Constraint (Explicit Fix)
+				# If y=1, Dropoff CANNOT be the first position (0)
+				self.wcnf.append([-self.yVarList[i][j], -self.nuVarList[j][dropoff][0]])
+				# If y=1, Pickup CANNOT be the last position
+				self.wcnf.append([-self.yVarList[i][j], -self.nuVarList[j][pickup][last_bit_idx]])
+
+	def genHardClauseForOneHotNuVar(self):
+		for t in range(self.lenOfVehicle):
+			for i in range(self.lenOfLocation):
+				self.exactlyOne(self.nuVarList[t][i])
 
 	def resetVarIDforMaxSAT(self):
 		self.varID = self.hVarList[0][0] - 1 # Reset to varID to 1st variable 'h^t_v'
@@ -255,9 +282,9 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 		self.genHardClauseForEq5()
 		self.genHardClauseForEq6()
 		self.genHardClauseForEq7()
-		self.genHardClauseForEq8_b1()
-		self.genHardClauseForEq8_b2()
+		self.genHardClauseForEq8_b()
 		self.genHardClauseForEq9_b()
+		self.genHardClauseForOneHotNuVar()
 		self.genHardClauseForEq11()
 		#self.printHVarLits()
 		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.10

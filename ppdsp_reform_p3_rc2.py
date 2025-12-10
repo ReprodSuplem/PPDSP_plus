@@ -159,6 +159,7 @@ class PPDSP_MaxSAT_p3(PPDSP_reform):
 					clause = [-self.yVarList[i][t], -self.nuVarList[t][dropoff][p]]
 					if p > 0:
 						clause.append(self.nuVarList[t][pickup][p-1])
+					# p=0: y -> -nu[dropoff][0] (dropoff cannot be first)
 					self.wcnf.append(clause)
 				# B. Boundary Constraint
 				# If y=1, pickup cannot be the implicit last position.
