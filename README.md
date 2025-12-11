@@ -37,7 +37,7 @@ python main.py <mode> <method> <tsplib_file> <num_requests> <num_vehicles> <k-NN
 | `<tsplib_file>`  | TSPLIB instance file name               | `burma14`,`ulysses16`             |
 | `<num_requests>` | Number of pickup-delivery requests      | `7`                               |
 | `<num_vehicles>` | Number of available vehicles            | `2`                               |
-| `<k-NN>`         | $k$ value of $k$-NN adjacency matrix    | `4`, `0` (0 for complete graph)   |
+| `<k-NN>`         | $k$ value of $k$-NN adjacency matrix    | `4`, `0` ($0$ for complete graph)   |
 
 
 ## 💡 Example
@@ -59,7 +59,7 @@ python main.py maxsat p2 burma14 13 2 7
 
 ### For maxsat mode:
 
-In MaxSAT mode, three formulations are available: **p1**, **p2**, and **p4**.  
+In MaxSAT mode, four formulations are available: **p1**, **p2**, **p3**, and **p4**.  
 They differ in how MTZ subtour elimination and capacity constraints are encoded.
 
 - **p1**: Arithmetic MTZ + PB-based Capacity Encoding
@@ -68,13 +68,13 @@ They differ in how MTZ subtour elimination and capacity constraints are encoded.
 	    - `CardEnc` (cardinality-constraint encodings) for MTZ,
 	    - `PBEnc` (pseudo-Boolean encodings) for vehicle capacity constraints.
         
-- **p2**: Boolean Potential Vector MTZ + PB-based Capacity Encoding
-	- MTZ constraints use a **Boolean potential vector encoding** (binary position indicators) instead of integer variables.
+- **p2 (resp. p3)**: Direct Encoding (resp. Order Encoding) for MTZ + PB-based Capacity Encoding
+	- MTZ constraints use a **direct encoding (resp. order encoding)** by Boolean position vector (resp. domain indicators) instead of integer variables.
 	- This eliminates arithmetic comparisons and yields a pure Boolean MTZ encoding.
 	- Capacity constraints are still encoded _fully_ using PySAT’s `PBEnc`, same as **p1**.
     
-- **p4**: Boolean Potential Vector MTZ + Lazy Benders Cuts for Capacity**
-	- MTZ constraints use the same Boolean potential vector encoding as **p2**.
+- **p4**: Order Encoding for MTZ + Lazy Benders Cuts for Capacity**
+	- MTZ constraints use the same order encoding as **p3**.
 	- Capacity constraints are _not_ encoded up front. Instead, overload violations are detected _during solving_ using:
 	    - **Lazy Benders cuts**, and **clauses learning** incrementally to forbid overloaded prefixes.
 	- Requires a modified version of **UWrMaxSAT** that:
@@ -88,7 +88,7 @@ They differ in how MTZ subtour elimination and capacity constraints are encoded.
 elif mode == "maxsat":
 ...
 solver.genMaxsatFormular()
-solver.solve(solver="uwr")
+solver.solve(time_limit = 3600)
 ...
 ```
 
