@@ -1398,24 +1398,19 @@ SwitchSearchMethod:
        }
     }
 
-    // ============= (PPDSP) Force output of model (v line) =============
-    if (satisfied && asynch_interrupt && ppdsp_instance != nullptr) {
-        std::vector<int> fullModel;
-        fullModel.reserve(best_model.size());
-        for (int i = 0; i < best_model.size(); i++) {
-            if (best_model[i]) {
-                fullModel.push_back(i + 1); // 0-based index -> 1-based literal
-            }
-        }
-        std::vector<int> xyModel;
-        PPDSP_utils::extractXYModel(ppdsp_instance, fullModel, xyModel);
+    // ===== (PPDSP) Force output of model (v line) =====
+    extern int opt_ppdsp_lastY;
+    if (satisfied && asynch_interrupt) {
         printf("v");
-        for (int lit : xyModel) {
-            printf(" %d", lit);
+        int cutoff = (opt_ppdsp_lastY > 0) ? opt_ppdsp_lastY : pb_n_vars;
+        for (int i = 0; i < pb_n_vars; i++) {
+            if (i < best_model.size() && best_model[i] && (i + 1) <= cutoff) {
+                printf(" %d", i + 1);
+            }
         }
         printf("\n");
     }
-    // ==================================================================
+    // ==================================================
 
     if (opt_verbosity >= 1
 #ifdef USE_SCIP
