@@ -130,12 +130,17 @@ def gen_request_list(coords: List[Tuple[float, float]], repetRate: float, seed: 
 	for i in range(lenOfRequest):
 		lowerVol = 1
 		upperVol = 2 * avgVol - lowerVol
-		tmpRandVol = my_round_int(random.uniform(lowerVol, upperVol))
-		rand_factor = random.uniform(0.9, 1.1)
-		profit = my_round_int(3 * avgDistance * tmpRandVol / avgVol * rand_factor)
-		size = tmpRandVol
+		size = my_round_int(random.uniform(lowerVol, upperVol))
+
 		pickup = sortedPairList[i][0]
 		dropoff = sortedPairList[i][1]
+
+		pd_dist = math.dist(coords[pickup], coords[dropoff])
+		base_reward = avgDistance * 0.5
+		raw_profit = (pd_dist + base_reward) * (1 + 0.2 * (size / avgVol))
+		rand_factor = random.uniform(0.9, 1.1)
+		profit = my_round_int(raw_profit * rand_factor)
+		
 		requestList.append([profit, size, pickup, dropoff])
 	return requestList
 
@@ -218,21 +223,56 @@ def gen_adj_matrs(coords: List[Tuple[float, float]], start_k: int, sizeOfGList: 
 		df_full = pd.DataFrame(fullAdjMatrix)
 		df_full.to_csv(f'{outDir}/adjMatrx0_{tspName}.csv', header=False, index=False)
 
-def gen_vehic_caps(nOfVehicList: List[int], tspName: str, outDir: str = "."):
+def gen_vehic_caps(fullRequestList: List[List[int]], cutLens: List[int], tspName: str, outDir: str = "."):
+	"""
+	Dynamically determine vehicle count based on the specific request set being used.
+	"""
 	avgCap = 20
-	for num in nOfVehicList:
+
+	for length in cutLens:
+		real_len = min(length, len(fullRequestList))
+		current_requests = fullRequestList[:real_len]
+		
+		total_demand = sum([r[1] for r in current_requests]) # r[1] is size
+		
+		# STANDARD: Scarcity / Tightness
+		# We want Total Demand > Total Fleet Capacity.
+		# This forces two behaviors:
+		# 1. Selection: The solver MUST reject some requests because it physically can't carry them all at once.
+		# 2. Interleaving: To serve more requests, the vehicle MUST drop off items to free up space (capacity reuse).
+		
+		# Setting ratio to 1.5 means: Total Demand is 150% of Total Static Capacity.
+		# Even if all cars go out, they can only hold ~67% of the goods at any single instant.
+		demand_to_capacity_ratio = 1.5
+		
+		# Calculate needed capacity
+		num_vehicles = math.ceil(total_demand / (avgCap * demand_to_capacity_ratio))
+		
+		# Ensure at least 2 vehicles to keep it a Multi-Vehicle problem
+		num_vehicles = max(2, num_vehicles)
+
 		vehicleList = []
-		for i in range(num):
+		for i in range(num_vehicles):
+			# --- SBC Coefficients ---
+			# Use small gaps (0.1) to break symmetry without creating unrealistic cost disparities.
 			capactCoeffi = [1, 0, -1]
-			vehicleList.append([avgCap + 5 * capactCoeffi[i % 3], 1 + 0.2 * capactCoeffi[i % 3]])
+			cost_factor = 1 + 0.1 * capactCoeffi[i % 3]
+			
+			# Capacity slightly varies around 20 (e.g., 15, 20, 25)
+			# This heterogeneity also helps Solver distinguish vehicles.
+			this_cap = avgCap + 5 * capactCoeffi[i % 3]
+			
+			vehicleList.append([this_cap, cost_factor])
+			
+		csv_filename = f'{outDir}/vehicleCap{num_vehicles}_{tspName}.csv'
+		
 		df = pd.DataFrame(vehicleList)
-		df.to_csv(f'{outDir}/vehicleCap{num}_{tspName}.csv', header=False, index=False)
+		df.to_csv(csv_filename, header=False, index=False)
 
 def gen_all_ins_arg(tspPath: str,
 					repetRateList: List[float] = [3, 2.5, 2, 1.5, 1],
-					nOfVehicList: List[int] = [2, 4, 6, 8, 10],
-					start_k: int = 4,
-					sizeOfGList: int = 3,
+					start_k: int = 3,
+					sizeOfGList: int = 2,
 					skip: int = 2,
 					outDir: str = ".",
 					seed: int = None):
@@ -251,15 +291,17 @@ def gen_all_ins_arg(tspPath: str,
 	write_nodes_csv(coords, tspName, outDir=outDir)
 
 	# 2. Generate Requests
-    # Use the first repeat rate to generate a complete request list
-	requestList = gen_request_list(coords, repetRateList[0], seed=seed)
-	write_request_csvs(requestList, tspName, [my_round_int((lenOfCoord-1) * r / 2) for r in repetRateList], outDir=outDir)
+	# Use the LARGEST repeat rate to generate the master list
+	max_repet_rate = max(repetRateList)
+	requestList = gen_request_list(coords, max_repet_rate, seed=seed)
+	cutLens = [my_round_int((lenOfCoord-1) * r / 2) for r in repetRateList]
+	write_request_csvs(requestList, tspName, cutLens, outDir=outDir)
 
 	# 3. Generate Adjacency Matrices (k-NN + MST)
 	gen_adj_matrs(coords, start_k, sizeOfGList, skip, tspName, outDir=outDir)
 
 	# 4. Generate Vehicles
-	gen_vehic_caps(nOfVehicList, tspName, outDir=outDir)
+	gen_vehic_caps(requestList, cutLens, tspName, outDir=outDir)
 
 	#print("Generation Completed.", tspName)
 

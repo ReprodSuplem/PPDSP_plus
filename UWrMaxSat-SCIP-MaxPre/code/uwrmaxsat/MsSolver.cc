@@ -351,7 +351,30 @@ lbool MsSolver::satSolveLimited(Minisat::vec<Lit> &assump_ps)
         for (int i = 0; i < global_assumptions.size(); i++) assump_ps.push(global_assumptions[i]);
         for (int i = 0; i < harden_assump.size(); i++)      assump_ps.push (harden_assump[i]);
     }
-    lbool status = sat_solver.solveLimited(assump_ps);
+    // ===== (Begin) Timeout during satSolveLimited slice =====
+    lbool status = l_Undef;
+    
+    // Setting the slice size for conflict budget (the smaller, the more frequent checks)
+    const int64_t CONFLICT_BUDGET_SLICE = 10000; 
+
+    while (status == l_Undef) {
+        // A. Check for timeout at the beginning of each slice
+        if (PPDSP_timeout()) {
+            if (!asynch_interrupt) {
+                 printf("c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.\n");
+            }
+            asynch_interrupt = true;
+            break;
+        }
+        if (asynch_interrupt) break;
+        // B. Set a "limited to this slice" budget for the solver
+        sat_solver.setConfBudget(CONFLICT_BUDGET_SLICE);
+        // C. Solver will be limited to CONFLICT_BUDGET_SLICE conflicts
+        status = sat_solver.solveLimited(assump_ps);
+        // D. Make sure budgets are cleared if we break out due to timeout, to avoid affecting subsequent logic
+        sat_solver.budgetOff();
+    }
+    // ===== (End) Timeout during satSolveLimited slice =====
 
     if (ipamir_used) {
         if (harden_assump.size() > 0)      assump_ps.shrink(harden_assump.size());
@@ -1374,6 +1397,26 @@ SwitchSearchMethod:
            }
        }
     }
+
+    // ============= (PPDSP) Force output of model (v line) =============
+    if (satisfied && asynch_interrupt && ppdsp_instance != nullptr) {
+        std::vector<int> fullModel;
+        fullModel.reserve(best_model.size());
+        for (int i = 0; i < best_model.size(); i++) {
+            if (best_model[i]) {
+                fullModel.push_back(i + 1); // 0-based index -> 1-based literal
+            }
+        }
+        std::vector<int> xyModel;
+        PPDSP_utils::extractXYModel(ppdsp_instance, fullModel, xyModel);
+        printf("v");
+        for (int lit : xyModel) {
+            printf(" %d", lit);
+        }
+        printf("\n");
+    }
+    // ==================================================================
+
     if (opt_verbosity >= 1
 #ifdef USE_SCIP
             && opt_finder != OPT_SCIP 

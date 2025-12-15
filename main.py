@@ -44,7 +44,7 @@ else:
 		solver = PPDSP_MIP(tsplib, request, vehicle, knn)
 		solver.genMipFormular()
 		solver.writeLpFile()
-		solver.solve(time_limit = 60)
+		solver.solve(time_limit = 3600)
 	elif mode == "smt2":
 		if method == "p1":
 			solver = PPDSP_SMT2_p1(tsplib, request, vehicle, knn)
@@ -54,7 +54,7 @@ else:
 			print(f"Unknown method: {method}")
 			sys.exit(1)
 		solver.genSmt2Formular()
-		solver.solve(time_limit = 60)
+		solver.solve(time_limit = 3600)
 	elif mode == "maxsat":
 		if method == "p1":
 			solver = PPDSP_MaxSAT_p1(tsplib, request, vehicle, knn)
@@ -68,7 +68,7 @@ else:
 			print(f"Unknown method: {method}")
 			sys.exit(1)
 		solver.genMaxsatFormular()
-		solver.solve(time_limit = 60)
+		solver.solve(time_limit = 3600)
 	else:
 		print(f"Unknown mode: {mode}")
 		sys.exit(1)
