@@ -279,7 +279,6 @@ def gen_all_ins_arg(tspPath: str,
 	"""
 	Main function: Given a TSP file and several parameters, generate all related CSV files (nodes, requests, vehicles, and adjacency matrices).
 	- repetRateList: a list repet rates used to split the request file
-	- nOfVehicList: a list of the number of vehicles
 	- start_k, sizeOfGList, skip: parameters controlling the generation of adjacency matrices
 	"""
 	if seed is not None:
