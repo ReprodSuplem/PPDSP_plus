@@ -1,5 +1,28 @@
 #!/bin/bash
 
+# ==============================================================================
+# 实验配置区域
+# ==============================================================================
+# MaxSAT 编码列表 (p1-p6)
+# p1: Totalizer + BDD
+# p2: Direct + BDD
+# p3: Order + BDD
+# p4: Order + Lazy
+# p5: Direct + Lazy
+# p6: Totalizer + Lazy
+MAXSAT_ENCS="p1 p2 p3 p4 p5 p6"
+
+# MIP 编码列表
+MIP_ENCS="p1"
+
+# 图密度列表 (3=稀疏, 5=中等, 0=完全图) K_LIST="3 5 0"
+# 如果只想跑稀疏图，可以改为: K_LIST="3"
+K_LIST="3"
+
+# ==============================================================================
+# 工具函数
+# ==============================================================================
+
 run_cmd() {
     echo "========================================================"
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Running: $@"
@@ -7,72 +30,89 @@ run_cmd() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] finished"
 }
 
-# ========================================================
-# TSPLIB: Burma14
-# Request: 7, 10, 13, 16, 20
-# Vehicle: 2, 3, 4
-# K: 3, 5, 0
-# ========================================================
-echo "Starting Burma14 Experiments..."
+check_and_run_maxsat() {
+    enc=$1; inst=$2; r=$3; v=$4; k=$5
+    outfile="${enc}_${inst}_r${r}v${v}k${k}.wcnf.out"
+    if [ -s "$outfile" ]; then
+        echo "[SmartSkip] $outfile already exists. Skipping..."
+    else
+        run_cmd python main.py maxsat $enc $inst $r $v $k
+    fi
+}
 
-for r in 7 10 13 16 20; do
-    for v in 2 3 4; do
-        for k in 3 5 0; do
-            # 1. Run MaxSAT (p1, p2, p3, p4)
-            for enc in p1 p2 p3 p4; do
-                run_cmd python main.py maxsat $enc burma14 $r $v $k
+check_and_run_mip() {
+    enc=$1; inst=$2; r=$3; v=$4; k=$5
+    outfile="${enc}_${inst}_r${r}v${v}k${k}.lp.out"
+    if [ -s "$outfile" ]; then
+        echo "[SmartSkip] $outfile already exists. Skipping..."
+    else
+        run_cmd python main.py mip $enc $inst $r $v $k
+    fi
+}
+
+run_batch() {
+    inst=$1
+    # 接收剩余参数作为配对列表，格式为 "r v"
+    shift
+    pairs=("$@")
+
+    echo ">>> Starting Benchmarks for: $inst"
+    
+    # 遍历每一个 (r, v) 配对
+    for pair in "${pairs[@]}"; do
+        # 读取 r and v
+        set -- $pair
+        r=$1
+        v=$2
+        
+        echo "Processing $inst | Request=$r | Vehicle=$v"
+        
+        # 遍历 k
+        for k in $K_LIST; do
+            # 1. Run MaxSAT (p1 - p6)
+            for enc in $MAXSAT_ENCS; do
+                check_and_run_maxsat $enc $inst $r $v $k
             done
             
             # 2. Run MIP (p1)
-            run_cmd python main.py mip p1 burma14 $r $v $k
-        done
-    done
-done
-
-
-# ========================================================
-# TSPLIB: Bayg29
-# Request: 14, 21, 28, 35, 42
-# Vehicle: 4, 6, 8
-# K: 3, 5, 0
-# ========================================================
-echo "Starting Bayg29 Experiments..."
-
-for r in 14 21 28 35 42; do
-    for v in 4 6 8; do
-        for k in 3 5 0; do
-            # 1. Run MaxSAT (p1, p2, p3, p4)
-            for enc in p1 p2 p3 p4; do
-                run_cmd python main.py maxsat $enc bayg29 $r $v $k
+            for enc in $MIP_ENCS; do
+                check_and_run_mip $enc $inst $r $v $k
             done
-            
-            # 2. Run MIP (p1)
-            run_cmd python main.py mip p1 bayg29 $r $v $k
         done
     done
-done
+    echo ">>> Finished Benchmarks for: $inst"
+    echo ""
+}
 
+# ==============================================================================
+# 主执行逻辑
+# ==============================================================================
 
-# ========================================================
-# TSPLIB: Berlin52
-# Request: 26, 38, 51, 64, 77
-# Vehicle: 7, 10, 14
-# K: 3, 5, 0
-# ========================================================
-echo "Starting Berlin52 Experiments..."
+echo "Starting Experiments..."
 
-for r in 26 38 51 64 77; do
-    for v in 7 10 14; do
-        for k in 3 5 0; do
-            # 1. Run MaxSAT (p1, p2, p3, p4)
-            for enc in p1 p2 p3 p4; do
-                run_cmd python main.py maxsat $enc berlin52 $r $v $k
-            done
-            
-            # 2. Run MIP (p1)
-            run_cmd python main.py mip p1 berlin52 $r $v $k
-        done
-    done
-done
+# 1. Burma14 Pairs: (7, 2), (10, 2), (13, 3), (16, 3), (19, 4)
+# 注意：最后一个是 19, 4 (根据之前修正的文件名逻辑)
+run_batch "burma14" \
+    "7 2" \
+    "10 2" \
+    "13 3" \
+    "16 3" \
+    "19 4"
 
-echo "All experiments completed."
+# 2. Ulysses22 Pairs: (11, 2), (16, 3), (21, 4), (26, 5), (31, 5)
+run_batch "ulysses22" \
+    "11 2" \
+    "16 3" \
+    "21 4" \
+    "26 5" \
+    "31 5"
+
+# 3. Bayg29 Pairs: (14, 3), (21, 4), (28, 6), (35, 7), (42, 8)
+run_batch "bayg29" \
+    "14 3" \
+    "21 4" \
+    "28 6" \
+    "35 7" \
+    "42 8"
+
+echo "All Experiments Completed Successfully."

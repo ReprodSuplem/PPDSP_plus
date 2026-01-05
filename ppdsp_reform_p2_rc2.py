@@ -95,7 +95,7 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 				self.atMostOne(varList)
 
 	# MTZ-SEC
-	def genHardClauseForEq8_b(self):
+	def genHardClauseForEq8_a(self):
 		"""
 		MTZ Constraints for Direct Encoding
 		Logic: x[j][k] -> (u[k] == p -> u[j] == p-1)
@@ -121,7 +121,7 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 						# Logic: x -> not nu[j][last]
 						self.wcnf.append([-self.xVarList[i][j][k], -self.nuVarList[i][j][last_bit_idx]])
 
-	def genHardClauseForEq9_b(self):
+	def genHardClauseForEq9_a(self):
 		"""
 		Precedence Constraints for Direct Encoding
 		Logic: y[r] -> u[drop] > u[pick]
@@ -282,8 +282,8 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 		self.genHardClauseForEq5()
 		self.genHardClauseForEq6()
 		self.genHardClauseForEq7()
-		self.genHardClauseForEq8_b()
-		self.genHardClauseForEq9_b()
+		self.genHardClauseForEq8_a()
+		self.genHardClauseForEq9_a()
 		self.genHardClauseForOneHotNuVar()
 		self.genHardClauseForEq11()
 		#self.printHVarLits()

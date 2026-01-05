@@ -1,18 +1,20 @@
-# ppdsp_reform_p4_rc2.py
+# ppdsp_reform_p6_rc2.py
 
 from ppdsp_reform_ins_gen import PPDSP_reform
 from ppdsp_reform_utils import PPDSP_utils
 from pysat.pb import *
 from pysat.formula import *
+from pysat.card import CardEnc
 
-class PPDSP_MaxSAT_p4(PPDSP_reform):
+class PPDSP_MaxSAT_p6(PPDSP_reform):
 	def __init__(self, tsplib, request, vehicle, knn):
 		super().__init__(tsplib, request, vehicle, knn)
 		self.knn = int(knn)
 		self.wcnf = WCNF()
 		self.cnf = CNF()
 		self.vpool = None
-		self.insName = f"p4_{tsplib}_r{request}v{vehicle}k{knn}"
+		self.uVarLits = [[[] for j in range(len(self.uVarList[i]))] for i in range(len(self.uVarList))]
+		self.insName = f"p6_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def atLeastOne(self, varList):
 		self.wcnf.append(varList)
@@ -93,77 +95,47 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 						varList.append(self.xVarList[i][j][k])
 				self.atMostOne(varList)
 
-	# MTZ-SEC
-	# =================================================================
-	# Order Encoding (Adapted for nuVarList size = |V|-1)
-	# We only use the first |V|-2 bits (indices 0 to |V|-3).
-	# The last allocated bit (index |V|-2) is ignored/unused.
-	# Implicit max value u = |V|-2 (when all used bits are 0).
-	# =================================================================
-	def genHardClauseForDomainTransitive(self):
-		"""
-		Monotonicity: nu[p] -> nu[p+1]
-		Indices range: 0 to (|V|-3).
-		We check pairs (p, p+1), so loop p up to (|V|-3) - 1.
-		"""
-		num_bits = self.lenOfLocation - 1 # |V|-2
-		for t in range(self.lenOfVehicle):
-			for i in range(self.lenOfLocation):
-				for p in range(num_bits - 1):
-					# Clause: -nu[p] v nu[p+1]
-					self.wcnf.append([-self.nuVarList[t][i][p], self.nuVarList[t][i][p+1]])
+	def resetVarIDforMaxSAT(self):
+		self.varID = self.uVarList[0][0] - 1 # Reset to varID to 1st variable 'u^t_v'
 
-	def genHardClauseForEq8_b(self): # MTZ core
-		"""
-		MTZ: x[j][k] -> u[k] >= u[j] + 1
-		1. Standard Implications
-		2. Boundary Fix: j cannot be the implicit last position (|V|-2)
-		"""
-		num_bits = self.lenOfLocation - 1 # |V|-2
-		last_bit_idx = num_bits - 1 # Last bit index is |V|-3
-		for t in range(self.lenOfVehicle):
+	def genHardClauseForEq12(self): # Literals allocation for Eq.8-9
+		self.resetVarIDforMaxSAT()
+		for i in range(self.lenOfVehicle):
+			for j in range(self.lenOfLocation):
+				for k in range(self.lenOfLocation-1):
+					self.uVarLits[i][j].append(self.newVarID())
+
+	def printUVarLits(self):
+		for i in range(len(self.uVarLits)):
+			for j in range(len(self.uVarLits[i])):
+				print('u^{{{0}}}{1}_[{2}]'.format(i,'v', self.uVarList[i][j]))
+				print(self.uVarLits[i][j])
+
+	# MTZ-SEC
+	def genHardClauseForEq8(self):
+		for i in range(self.lenOfVehicle):
 			for j in range(self.lenOfLocation):
 				for k in range(self.lenOfLocation):
-					if j == k: continue
-					if self.adjMatrx[j][k] == 0: continue # k-NN pruning
-					# A. Standard Loop (p from 0 to last_bit_idx)
-					# Logic: x -> (nu[k][p] -> nu[j][p-1])
-					for p in range(num_bits):
-						clause = [-self.xVarList[t][j][k], -self.nuVarList[t][k][p]]
-						if p > 0:
-							clause.append(self.nuVarList[t][j][p-1])
-						# p=0: x -> -nu[k][0] (k cannot be first)
-						self.wcnf.append(clause)
-					# B. Boundary Constraint
-					# If x_{jk}=1, j cannot be the implicit last position (|V|-2).
-					# Meaning u[j] <= |V|-3.
-					# In Order Encoding, this means nu[j][last_bit_idx] MUST be True.
-					clause_boundary = [-self.xVarList[t][j][k], self.nuVarList[t][j][last_bit_idx]]
-					self.wcnf.append(clause_boundary)
+					if k != j:
+						if self.adjMatrx[j][k] == 0: continue
+						litList = self.uVarLits[i][k] + [-1 * l for l in self.uVarLits[i][j]]
 
-	def genHardClauseForEq9_b(self): # Precedence
-		"""
-		Precedence: y[r] -> u[drop] >= u[pick] + 1
-		1. Standard Loop
-		2. Boundary Fix: pickup cannot be the implicit last position
-		"""
-		num_bits = self.lenOfLocation - 1 # |V|-2
-		last_bit_idx = num_bits - 1 # Last bit index is |V|-3
+						#print("現在最大変数ID:", self.vpool.top) # Show current max varID in vpool
+
+						cnf_obj = CardEnc.atleast(lits = litList, bound = 1 + len(self.uVarLits[i][j]), vpool = self.vpool, encoding = 6)
+						for clause in cnf_obj.clauses:
+							self.cnf.append([-self.xVarList[i][j][k]] + clause, update_vpool=True)
+
+	def genHardClauseForEq9(self):
 		for i in range(self.lenOfRequest):
-			pickup = self.requestList[i][2]
-			dropoff = self.requestList[i][3]
-			for t in range(self.lenOfVehicle):
-				# A. Standard Loop
-				for p in range(num_bits):
-					clause = [-self.yVarList[i][t], -self.nuVarList[t][dropoff][p]]
-					if p > 0:
-						clause.append(self.nuVarList[t][pickup][p-1])
-					# p=0: y -> -nu[dropoff][0] (dropoff cannot be first)
-					self.wcnf.append(clause)
-				# B. Boundary Constraint
-				# If y=1, pickup cannot be the implicit last position.
-				clause_boundary = [-self.yVarList[i][t], self.nuVarList[t][pickup][last_bit_idx]]
-				self.wcnf.append(clause_boundary)
+			for j in range(self.lenOfVehicle):
+				litList = self.uVarLits[j][self.requestList[i][2]] + [-1 * l for l in self.uVarLits[j][self.requestList[i][3]]]
+
+				#print("Current max varID:", self.vpool.top) # Show current max varID in vpool
+
+				cnf_obj = CardEnc.atmost(lits = litList, bound = len(self.uVarLits[j][self.requestList[i][3]]) - 1, vpool = self.vpool, encoding = 6)
+				for clause in cnf_obj.clauses:
+					self.cnf.append([-self.yVarList[i][j]] + clause, update_vpool=True)
 
 	def genHardClauseForKnn(self): # Adding k-NN pruning constraints
 		for t in range(self.lenOfVehicle):
@@ -238,7 +210,7 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 	def genMaxsatFormular(self):
 		self.genXVarList()
 		self.genYVarList()
-		self.genNuVarList()
+		self.genUVarList()
 
 		self.genSoftClause()
 		self.genHardClauseForEq3()
@@ -246,9 +218,11 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		self.genHardClauseForEq5()
 		self.genHardClauseForEq6()
 		self.genHardClauseForEq7()
-		self.genHardClauseForDomainTransitive()
-		self.genHardClauseForEq8_b()
-		self.genHardClauseForEq9_b()
+		self.genHardClauseForEq12()
+		#self.printUVarLits()
+		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.8-9
+		self.genHardClauseForEq8()
+		self.genHardClauseForEq9()
 		self.genHardClauseFoRec() if self.knn == 0 else self.genHardClauseForKnn()
 		self.genHardClauseForSbc()
 

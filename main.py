@@ -9,6 +9,8 @@ from ppdsp_reform_p1_rc2 import PPDSP_MaxSAT_p1
 from ppdsp_reform_p2_rc2 import PPDSP_MaxSAT_p2
 from ppdsp_reform_p3_rc2 import PPDSP_MaxSAT_p3
 from ppdsp_reform_p4_rc2 import PPDSP_MaxSAT_p4
+from ppdsp_reform_p5_rc2 import PPDSP_MaxSAT_p5
+from ppdsp_reform_p6_rc2 import PPDSP_MaxSAT_p6
 
 if len(sys.argv) < 2:
 	print("Usage:")
@@ -64,6 +66,10 @@ else:
 			solver = PPDSP_MaxSAT_p3(tsplib, request, vehicle, knn)
 		elif method == "p4":
 			solver = PPDSP_MaxSAT_p4(tsplib, request, vehicle, knn)
+		elif method == "p5":
+			solver = PPDSP_MaxSAT_p5(tsplib, request, vehicle, knn)
+		elif method == "p6":
+			solver = PPDSP_MaxSAT_p6(tsplib, request, vehicle, knn)
 		else:
 			print(f"Unknown method: {method}")
 			sys.exit(1)

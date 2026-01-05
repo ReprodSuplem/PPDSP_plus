@@ -1,18 +1,18 @@
-# ppdsp_reform_p4_rc2.py
+# ppdsp_reform_p5_rc2.py
 
 from ppdsp_reform_ins_gen import PPDSP_reform
 from ppdsp_reform_utils import PPDSP_utils
 from pysat.pb import *
 from pysat.formula import *
 
-class PPDSP_MaxSAT_p4(PPDSP_reform):
+class PPDSP_MaxSAT_p5(PPDSP_reform):
 	def __init__(self, tsplib, request, vehicle, knn):
 		super().__init__(tsplib, request, vehicle, knn)
 		self.knn = int(knn)
 		self.wcnf = WCNF()
 		self.cnf = CNF()
 		self.vpool = None
-		self.insName = f"p4_{tsplib}_r{request}v{vehicle}k{knn}"
+		self.insName = f"p5_{tsplib}_r{request}v{vehicle}k{knn}"
 
 	def atLeastOne(self, varList):
 		self.wcnf.append(varList)
@@ -94,76 +94,61 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 				self.atMostOne(varList)
 
 	# MTZ-SEC
-	# =================================================================
-	# Order Encoding (Adapted for nuVarList size = |V|-1)
-	# We only use the first |V|-2 bits (indices 0 to |V|-3).
-	# The last allocated bit (index |V|-2) is ignored/unused.
-	# Implicit max value u = |V|-2 (when all used bits are 0).
-	# =================================================================
-	def genHardClauseForDomainTransitive(self):
+	def genHardClauseForEq8_a(self):
 		"""
-		Monotonicity: nu[p] -> nu[p+1]
-		Indices range: 0 to (|V|-3).
-		We check pairs (p, p+1), so loop p up to (|V|-3) - 1.
+		MTZ Constraints for Direct Encoding
+		Logic: x[j][k] -> (u[k] == p -> u[j] == p-1)
+		Clause: -x[j][k] v -nu[k][p] v nu[j][p-1]
 		"""
-		num_bits = self.lenOfLocation - 1 # |V|-2
-		for t in range(self.lenOfVehicle):
-			for i in range(self.lenOfLocation):
-				for p in range(num_bits - 1):
-					# Clause: -nu[p] v nu[p+1]
-					self.wcnf.append([-self.nuVarList[t][i][p], self.nuVarList[t][i][p+1]])
-
-	def genHardClauseForEq8_b(self): # MTZ core
-		"""
-		MTZ: x[j][k] -> u[k] >= u[j] + 1
-		1. Standard Implications
-		2. Boundary Fix: j cannot be the implicit last position (|V|-2)
-		"""
-		num_bits = self.lenOfLocation - 1 # |V|-2
-		last_bit_idx = num_bits - 1 # Last bit index is |V|-3
-		for t in range(self.lenOfVehicle):
+		num_bits = self.lenOfLocation # |V|-1
+		last_bit_idx = num_bits - 1 # Last bit index is |V|-2
+		for i in range(self.lenOfVehicle):
 			for j in range(self.lenOfLocation):
 				for k in range(self.lenOfLocation):
-					if j == k: continue
-					if self.adjMatrx[j][k] == 0: continue # k-NN pruning
-					# A. Standard Loop (p from 0 to last_bit_idx)
-					# Logic: x -> (nu[k][p] -> nu[j][p-1])
-					for p in range(num_bits):
-						clause = [-self.xVarList[t][j][k], -self.nuVarList[t][k][p]]
-						if p > 0:
-							clause.append(self.nuVarList[t][j][p-1])
-						# p=0: x -> -nu[k][0] (k cannot be first)
-						self.wcnf.append(clause)
-					# B. Boundary Constraint
-					# If x_{jk}=1, j cannot be the implicit last position (|V|-2).
-					# Meaning u[j] <= |V|-3.
-					# In Order Encoding, this means nu[j][last_bit_idx] MUST be True.
-					clause_boundary = [-self.xVarList[t][j][k], self.nuVarList[t][j][last_bit_idx]]
-					self.wcnf.append(clause_boundary)
+					if k != j:
+						if self.adjMatrx[j][k] == 0: continue # k-NN pruning
+						# 1. Standard Chain: (p from 0 to last_bit_idx)
+						# Logic: x -> (nu[k][p] -> nu[j][p-1])
+						for p in range(num_bits):
+							clause = [-self.xVarList[i][j][k], -self.nuVarList[i][k][p]]
+							if p > 0:
+								clause.append(self.nuVarList[i][j][p-1])
+							# p=0: x -> -nu[k][0] (k cannot be first)
+							self.wcnf.append(clause)
+						# 2. Boundary Constraint (Explicit Fix):
+						# If x_jk=1, j CANNOT be at the last position (must leave room for k)
+						# Logic: x -> not nu[j][last]
+						self.wcnf.append([-self.xVarList[i][j][k], -self.nuVarList[i][j][last_bit_idx]])
 
-	def genHardClauseForEq9_b(self): # Precedence
+	def genHardClauseForEq9_a(self):
 		"""
-		Precedence: y[r] -> u[drop] >= u[pick] + 1
-		1. Standard Loop
-		2. Boundary Fix: pickup cannot be the implicit last position
+		Precedence Constraints for Direct Encoding
+		Logic: y[r] -> u[drop] > u[pick]
+		Includes Boundary Constraints for faster propagation.
 		"""
-		num_bits = self.lenOfLocation - 1 # |V|-2
-		last_bit_idx = num_bits - 1 # Last bit index is |V|-3
+		num_bits = self.lenOfLocation # |V|-1
+		last_bit_idx = num_bits - 1 # Last bit index is |V|-2
 		for i in range(self.lenOfRequest):
 			pickup = self.requestList[i][2]
 			dropoff = self.requestList[i][3]
-			for t in range(self.lenOfVehicle):
-				# A. Standard Loop
-				for p in range(num_bits):
-					clause = [-self.yVarList[i][t], -self.nuVarList[t][dropoff][p]]
-					if p > 0:
-						clause.append(self.nuVarList[t][pickup][p-1])
-					# p=0: y -> -nu[dropoff][0] (dropoff cannot be first)
-					self.wcnf.append(clause)
-				# B. Boundary Constraint
-				# If y=1, pickup cannot be the implicit last position.
-				clause_boundary = [-self.yVarList[i][t], self.nuVarList[t][pickup][last_bit_idx]]
-				self.wcnf.append(clause_boundary)
+			for j in range(self.lenOfVehicle):
+				# 1. Pairwise Prohibition (Standard Direct Encoding)
+				# Forbid: pick >= drop
+				# Clause: -y v -nu[drop][k] v -nu[pick][l] (where l >= k)
+				for k in range(1, num_bits): # p: from 1 to |V|-2
+					for l in range(k, num_bits - 1): # p': from p to |V|-3
+						clause = [-self.yVarList[i][j], -self.nuVarList[j][dropoff][k], -self.nuVarList[j][pickup][l]]
+						self.wcnf.append(clause)
+				# 2. Boundary Constraint (Explicit Fix)
+				# If y=1, Dropoff CANNOT be the first position (0)
+				self.wcnf.append([-self.yVarList[i][j], -self.nuVarList[j][dropoff][0]])
+				# If y=1, Pickup CANNOT be the last position
+				self.wcnf.append([-self.yVarList[i][j], -self.nuVarList[j][pickup][last_bit_idx]])
+
+	def genHardClauseForOneHotNuVar(self):
+		for t in range(self.lenOfVehicle):
+			for i in range(self.lenOfLocation):
+				self.exactlyOne(self.nuVarList[t][i])
 
 	def genHardClauseForKnn(self): # Adding k-NN pruning constraints
 		for t in range(self.lenOfVehicle):
@@ -246,9 +231,9 @@ class PPDSP_MaxSAT_p4(PPDSP_reform):
 		self.genHardClauseForEq5()
 		self.genHardClauseForEq6()
 		self.genHardClauseForEq7()
-		self.genHardClauseForDomainTransitive()
-		self.genHardClauseForEq8_b()
-		self.genHardClauseForEq9_b()
+		self.genHardClauseForEq8_a()
+		self.genHardClauseForEq9_a()
+		self.genHardClauseForOneHotNuVar()
 		self.genHardClauseFoRec() if self.knn == 0 else self.genHardClauseForKnn()
 		self.genHardClauseForSbc()
 

@@ -114,7 +114,7 @@ class PPDSP_MaxSAT_p3(PPDSP_reform):
 					# Clause: -nu[p] v nu[p+1]
 					self.wcnf.append([-self.nuVarList[t][i][p], self.nuVarList[t][i][p+1]])
 
-	def genHardClauseForEq8_c(self): # MTZ core
+	def genHardClauseForEq8_b(self): # MTZ core
 		"""
 		MTZ: x[j][k] -> u[k] >= u[j] + 1
 		1. Standard Implications
@@ -142,7 +142,7 @@ class PPDSP_MaxSAT_p3(PPDSP_reform):
 					clause_boundary = [-self.xVarList[t][j][k], self.nuVarList[t][j][last_bit_idx]]
 					self.wcnf.append(clause_boundary)
 
-	def genHardClauseForEq9_c(self): # Precedence
+	def genHardClauseForEq9_b(self): # Precedence
 		"""
 		Precedence: y[r] -> u[drop] >= u[pick] + 1
 		1. Standard Loop
@@ -298,8 +298,8 @@ class PPDSP_MaxSAT_p3(PPDSP_reform):
 		self.genHardClauseForEq6()
 		self.genHardClauseForEq7()
 		self.genHardClauseForDomainTransitive()
-		self.genHardClauseForEq8_c()
-		self.genHardClauseForEq9_c()
+		self.genHardClauseForEq8_b()
+		self.genHardClauseForEq9_b()
 		self.genHardClauseForEq11()
 		#self.printHVarLits()
 		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.10

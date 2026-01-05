@@ -904,6 +904,7 @@ void MsSolver::maxsat_solve(solve_Command cmd)
 
             extern bool opt_satisfiable_out;
             if (goalvalue < best_goalvalue || opt_output_top > 0 && goalvalue == best_goalvalue) {
+                printf("c [Elapsed time] %.2f s\n", cpuTime());
                 {
 #ifdef USE_SCIP
                     std::lock_guard<std::mutex> lck(optsol_mtx);
