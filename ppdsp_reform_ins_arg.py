@@ -12,17 +12,45 @@ def my_round_int(x: float) -> int:
     return int((x * 2 + 1) // 2)
 
 def read_tsplib_coords(tspPath: str) -> Tuple[List[Tuple[float, float]], str]:
-	"""
-	Read TSPLIB file and return coordinates list (with depot at the end) and tsp name (without extension).
-	"""
-	problem = tsplib95.load(tspPath)
-	nodes = sorted(problem.get_nodes())
-	coords = []
-	# Add all coordainates to coords (depot = the last pair of coordinates)
-	for i in range(1, 1+len(nodes)):
-		coords.append([100 * j for j in problem.node_coords[i]])
-	tspName = tspPath.split('/')[-1].replace('.tsp', '')
-	return coords, tspName
+    """
+    Read TSPLIB file and return standardized coordinates list (with depot at the end).
+    """
+    problem = tsplib95.load(tspPath)
+    nodes = sorted(problem.get_nodes())
+    
+    raw_coords = []
+    
+    # 1. Compatibility Check
+    has_node_coords = (len(problem.node_coords) > 0)
+    has_display_data = (len(problem.display_data) > 0)
+    
+    for i in nodes:
+        if has_node_coords:
+            raw_coords.append(problem.node_coords[i])
+        elif has_display_data:
+            raw_coords.append(problem.display_data[i])
+        else:
+            raise ValueError(f"Instance {tspPath} has neither NODE_COORD_SECTION nor DISPLAY_DATA_SECTION.")
+
+    # 2. Auto-Scaling
+    TARGET_MAX = 2000.0
+    
+    max_val = 0.0
+    for coord in raw_coords:
+        max_val = max(max_val, abs(coord[0]), abs(coord[1]))
+    
+    scale_factor = 1.0
+    if max_val > 0:
+        scale_factor = TARGET_MAX / max_val
+        
+    coords = []
+    for coord in raw_coords:
+        scaled_x = coord[0] * scale_factor
+        scaled_y = coord[1] * scale_factor
+        coords.append([scaled_x, scaled_y])
+
+    tspName = tspPath.split('/')[-1].replace('.tsp', '')
+    return coords, tspName
 	
 # Algorithm 1 in ICCS 2023 paper
 def gen_repet_time_list(lenOfCoordExcluDepot: int, repetRate: float) -> List[int]:
