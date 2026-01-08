@@ -13,26 +13,84 @@ def my_round_int(x: float) -> int:
 
 def read_tsplib_coords(tspPath: str) -> Tuple[List[Tuple[float, float]], str]:
     """
-    Read TSPLIB file and return standardized coordinates list (with depot at the end).
-    """
-    problem = tsplib95.load(tspPath)
-    nodes = sorted(problem.get_nodes())
+    Read TSPLIB (.tsp) or CVRPLib (.vrp) file and return standardized coordinates list.
     
+    Features:
+    1. Unified Interface: Handles both .tsp and .vrp extensions.
+    2. Depot Consistency: Ensures the Depot is always at the END of the list.
+       - TSP: Assumes largest ID (last in sorted) is Depot (Standard TSPLIB logic).
+       - VRP: Explicitly moves Node 1 (Depot) to the end.
+    3. Auto-Scaling: Maps coordinates to TARGET_MAX = 2000.0 for MaxSAT efficiency.
+    """
     raw_coords = []
     
-    # 1. Compatibility Check
-    has_node_coords = (len(problem.node_coords) > 0)
-    has_display_data = (len(problem.display_data) > 0)
-    
-    for i in nodes:
-        if has_node_coords:
-            raw_coords.append(problem.node_coords[i])
-        elif has_display_data:
-            raw_coords.append(problem.display_data[i])
+    # ==========================================
+    # Branch 1: CVRPLib (.vrp) Handling
+    # ==========================================
+    if tspPath.endswith('.vrp'):
+        node_map = {}
+        with open(tspPath, 'r') as f:
+            lines = f.read().splitlines()
+            
+        reading_coord = False
+        for line in lines:
+            line = line.strip()
+            if not line: continue
+            
+            if line.startswith("NODE_COORD_SECTION"):
+                reading_coord = True
+                continue
+            elif line.startswith("DEMAND_SECTION") or line.startswith("DEPOT_SECTION") or line.startswith("EOF"):
+                reading_coord = False
+                continue
+            
+            if reading_coord:
+                parts = line.split()
+                if len(parts) >= 3:
+                    # Format: ID X Y
+                    nid = int(parts[0])
+                    x = float(parts[1])
+                    y = float(parts[2])
+                    node_map[nid] = [x, y]
+        
+        # VRP Special Logic: Depot is usually Node 1.
+        # We must move Node 1 to the END to match your TSP convention.
+        sorted_ids = sorted(node_map.keys())
+        if 1 in sorted_ids:
+            # Add all customers first (ID > 1)
+            for nid in sorted_ids:
+                if nid != 1:
+                    raw_coords.append(node_map[nid])
+            # Add Depot (ID 1) last
+            raw_coords.append(node_map[1])
         else:
-            raise ValueError(f"Instance {tspPath} has neither NODE_COORD_SECTION nor DISPLAY_DATA_SECTION.")
+            # Fallback if no ID 1 (rare): just sort by ID
+            for nid in sorted_ids:
+                raw_coords.append(node_map[nid])
 
-    # 2. Auto-Scaling
+    # ==========================================
+    # Branch 2: TSPLIB (.tsp) Handling (Legacy)
+    # ==========================================
+    else:
+        # Load using tsplib95
+        problem = tsplib95.load(tspPath)
+        nodes = sorted(problem.get_nodes())
+        
+        # Check data source (Compatibility for bays29.tsp etc.)
+        has_node_coords = (len(problem.node_coords) > 0)
+        has_display_data = (len(problem.display_data) > 0)
+        
+        for i in nodes:
+            if has_node_coords:
+                raw_coords.append(problem.node_coords[i])
+            elif has_display_data:
+                raw_coords.append(problem.display_data[i])
+            else:
+                raise ValueError(f"Instance {tspPath} has neither NODE_COORD_SECTION nor DISPLAY_DATA_SECTION.")
+
+    # ==========================================
+    # Unified Step: Auto-Scaling to MaxSAT Range
+    # ==========================================
     TARGET_MAX = 2000.0
     
     max_val = 0.0
@@ -49,7 +107,7 @@ def read_tsplib_coords(tspPath: str) -> Tuple[List[Tuple[float, float]], str]:
         scaled_y = coord[1] * scale_factor
         coords.append([scaled_x, scaled_y])
 
-    tspName = tspPath.split('/')[-1].replace('.tsp', '')
+    tspName = tspPath.split('/')[-1].replace('.tsp', '').replace('.vrp', '')
     return coords, tspName
 	
 # Algorithm 1 in ICCS 2023 paper
