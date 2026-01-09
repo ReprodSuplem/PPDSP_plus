@@ -222,8 +222,9 @@ def gen_request_list(coords: List[Tuple[float, float]], repetRate: float, seed: 
 		dropoff = sortedPairList[i][1]
 
 		pd_dist = math.dist(coords[pickup], coords[dropoff])
-		base_reward = avgDistance * 0.5
-		raw_profit = (pd_dist + base_reward) * (1 + 0.2 * (size / avgVol))
+		base_reward = avgDistance * 2.0
+		volume_factor = 1.0 + (size / avgVol)
+		raw_profit = (pd_dist + base_reward) * volume_factor
 		rand_factor = random.uniform(0.9, 1.1)
 		profit = my_round_int(raw_profit * rand_factor)
 		

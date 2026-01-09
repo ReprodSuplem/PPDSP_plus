@@ -888,7 +888,7 @@ void MsSolver::maxsat_solve(solve_Command cmd)
                             // Add to solver
                             sat_solver.addClause(minisat_clause);
                         }
-                        break; // go back to SAT loop
+                        // REMOVED: break; // go back to SAT loop <-- Let it verify other vehicles too!
                     }
                 }
 

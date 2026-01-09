@@ -137,14 +137,14 @@ class PPDSP_utils:
 	@staticmethod
 	def get_sbc_groups(vehicleList):
 		"""
-		Group vehicles by Capacity ONLY (as requested).
-		Returns: dict {capacity: [v1, v2, v3...]}
+		Group vehicles by Capacity and Cost Factor.
+		Returns: dict {(capacity, cost): [v1, v2, v3...]}
 		"""
 		groups = {}
 		for t, veh in enumerate(vehicleList):
-			cap = veh[0] # Only Capacity
-			# cost = veh[1] # Ignored
-			key = cap
+			cap = int(veh[0])
+			cost = float(f"{veh[1]:.4f}")
+			key = (cap, cost)
 			
 			if key not in groups:
 				groups[key] = []
