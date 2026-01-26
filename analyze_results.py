@@ -8,25 +8,24 @@ def parse_log(filename):
     data = []
     current_run = {}
     
-    # MaxSAT 辅助变量
+    # Run-specific state
     maxsat_last_raw_sol = None
     maxsat_true_final_obj = None
     maxsat_hit_timeout_msg = False
     maxsat_temp_time = 0.0
     
-    # MIP 辅助变量
     mip_last_elapsed_buffer = 0.0
     mip_hit_timeout_threshold = False
     mip_temp_bound = None 
     
-    # SBC 状态追踪
-    is_maxsat_sbc = True 
-    is_mip_sbc = False
+    # Flags to detect tags in the log for the CURRENT run
+    found_maxsat_no_sbc_tag = False
+    found_mip_sbc_tag = False
     
-    # 1. 预先加载真实的 WCNF 统计数据
+    # 1. Pre-load WCNF stats
     wcnf_stats_map = load_real_wcnf_stats()
     
-    # 全局字典：存储 MIP Best Bound
+    # Global MIP bounds map
     mip_log_bounds_map = {} 
 
     # --- Regex ---
@@ -40,7 +39,10 @@ def parse_log(filename):
     maxsat_true_obj_pattern = re.compile(r"Objective = ([\d\.-]+)")
     maxsat_timeout_str_1 = "Timeout reached inside slice loop"
     maxsat_timeout_str_2 = "Timeout reached"
+    
+    # Tag detection patterns
     maxsat_no_sbc_pattern = re.compile(r"Generating instance:.*-SBC\.wcnf")
+    mip_sbc_pattern = re.compile(r"\[CPLEX\] Added \d+ SBC inequalities")
     
     # MIP Patterns
     mip_elapsed_pattern = re.compile(r"Elapsed time\s*=\s*([\d\.]+)\s*sec")
@@ -48,38 +50,64 @@ def parse_log(filename):
     mip_incumbent_pattern = re.compile(r"Found incumbent of value ([\d\.]+) after ([\d\.]+) sec")
     mip_final_obj_pattern = re.compile(r"\[CPLEX\] OPTIMAL OBJ:\s*([\d\.\-]+)")
     mip_final_time_pattern = re.compile(r"\[CPLEX\] Runtime:\s*([\d\.]+)")
-    mip_sbc_pattern = re.compile(r"\[CPLEX\] Added \d+ SBC inequalities")
 
     # Config Base Map
     config_base_map = {
-        'p1': 'TO+BDD', 'p2': 'DE+BDD', 'p3': 'OE+BDD',
-        'p4': 'OE+LCG', 'p5': 'DE+LCG', 'p6': 'TO+LCG',
+        'p1': 'TE+BDD', 'p2': 'DE+BDD', 'p3': 'OE+BDD',
+        'p4': 'OE+LCG', 'p5': 'DE+LCG', 'p6': 'TE+LCG',
         'default': 'MIP'
     }
 
-    def save_run(run_data, last_raw, true_obj, ms_timeout, mp_timeout, m_bound, ms_sbc, mp_sbc):
+    def save_run(run_data, last_raw, true_obj, ms_timeout, mp_timeout, m_bound, found_ms_no_sbc, found_mp_sbc):
         if not run_data or not run_data.get('method'): return
         
         raw_cfg = run_data.get('raw_config')
         method = run_data['method']
         base_label = config_base_map.get(raw_cfg, raw_cfg)
         
+        # --- Apply User's SBC Logic Here ---
+        T = run_data.get('K', 0)
+        final_is_sbc = False # Default
+        
+        if method == 'maxsat':
+            # MaxSAT Rules:
+            # 1. Has "-SBC" (found_ms_no_sbc=True) AND T>=4 -> No-SBC (False)
+            # 2. No "-SBC" (found_ms_no_sbc=False) AND T<4  -> No-SBC (False)
+            # 3. No "-SBC" (found_ms_no_sbc=False) AND T>=4 -> +SBC  (True)
+            
+            if found_ms_no_sbc and T >= 4:
+                final_is_sbc = False
+            elif not found_ms_no_sbc and T < 4:
+                final_is_sbc = False
+            elif not found_ms_no_sbc and T >= 4:
+                final_is_sbc = True
+            
+        elif method == 'mip':
+            # MIP Rules:
+            # 1. Has "Added SBC" (found_mp_sbc=True) AND T>=4 -> +SBC (True)
+            # 2. No "Added SBC" -> No-SBC (False)
+            
+            if found_mp_sbc and T >= 4:
+                final_is_sbc = True
+            else:
+                final_is_sbc = False
+        
+        # Construct Config Label
         final_label = base_label
-        if method == 'maxsat' and ms_sbc:
-            final_label += "+SBC"
-        elif method == 'mip' and mp_sbc:
+        if final_is_sbc:
             final_label += "+SBC"
             
         run_data['config'] = final_label
         
-        # 2. 尝试使用真实的 WCNF 统计数据覆盖 Log 数据
+        # WCNF Stats Lookup (MaxSAT only)
         if method == 'maxsat':
+            # Key: (instance, R, V, raw_config, is_sbc)
             lookup_key = (
                 run_data.get('instance'), 
                 run_data.get('N'), 
                 run_data.get('K'), 
                 raw_cfg, 
-                ms_sbc
+                final_is_sbc
             )
             if lookup_key in wcnf_stats_map:
                 real_vars, real_clauses = wcnf_stats_map[lookup_key]
@@ -123,11 +151,15 @@ def parse_log(filename):
 
     for line in lines:
         line = line.strip()
+        
+        # New Run Detection
         if "Running: python main.py" in line:
+            # Save previous run
             save_run(current_run, maxsat_last_raw_sol, maxsat_true_final_obj, 
                      maxsat_hit_timeout_msg, mip_hit_timeout_threshold, mip_temp_bound,
-                     is_maxsat_sbc, is_mip_sbc)
+                     found_maxsat_no_sbc_tag, found_mip_sbc_tag)
             
+            # Reset
             current_run = {
                 'instance': None, 'method': None, 'raw_config': None,
                 'N': None, 'K': None,
@@ -143,8 +175,9 @@ def parse_log(filename):
             mip_hit_timeout_threshold = False
             mip_temp_bound = None
             
-            is_maxsat_sbc = True
-            is_mip_sbc = False
+            # Reset Tags
+            found_maxsat_no_sbc_tag = False
+            found_mip_sbc_tag = False
             
             try:
                 parts = line.split("main.py")[1].strip().split()
@@ -161,8 +194,13 @@ def parse_log(filename):
             
         if not current_run.get('method'): continue
         
+        # Check Tags (Applicable to any run line)
+        if maxsat_no_sbc_pattern.search(line):
+            found_maxsat_no_sbc_tag = True
+        if mip_sbc_pattern.search(line):
+            found_mip_sbc_tag = True
+        
         if current_run['method'] == 'maxsat':
-            if maxsat_no_sbc_pattern.search(line): is_maxsat_sbc = False
             if "Number of variables:" in line:
                 m = vars_pattern.search(line)
                 if m: current_run['variables'] = int(m.group(1))
@@ -183,7 +221,6 @@ def parse_log(filename):
                 maxsat_hit_timeout_msg = True
         
         elif current_run['method'] == 'mip':
-            if mip_sbc_pattern.search(line): is_mip_sbc = True
             m_elapsed = mip_elapsed_pattern.search(line)
             if m_elapsed: mip_last_elapsed_buffer = float(m_elapsed.group(1))
             if mip_star_line_pattern.match(line): current_run['time'] = mip_last_elapsed_buffer
@@ -207,9 +244,10 @@ def parse_log(filename):
                     if is_bound_value(parts[-2]): mip_temp_bound = float(parts[-2])
                     elif len(parts) >= 3 and is_bound_value(parts[-3]): mip_temp_bound = float(parts[-3])
 
+    # Save last run
     save_run(current_run, maxsat_last_raw_sol, maxsat_true_final_obj, 
              maxsat_hit_timeout_msg, mip_hit_timeout_threshold, mip_temp_bound,
-             is_maxsat_sbc, is_mip_sbc)
+             found_maxsat_no_sbc_tag, found_mip_sbc_tag)
     
     df = pd.DataFrame(data)
     df = df.drop(columns=['raw_config'])
@@ -306,7 +344,18 @@ def load_real_wcnf_stats():
             R = int(match.group(3))
             V = int(match.group(4))
             sbc_tag = match.group(5)
-            is_sbc = (sbc_tag is None)
+            
+            # WCNF Lookup Logic needs to align with user's logic:
+            # 1. Filename has -SBC -> is_sbc=False
+            # 2. Filename no -SBC -> if V < 4 then is_sbc=False else is_sbc=True
+            
+            if sbc_tag is not None:
+                is_sbc = False
+            else:
+                if V < 4:
+                    is_sbc = False
+                else:
+                    is_sbc = True
             
             try:
                 with open(fname, 'r') as f:
@@ -339,6 +388,7 @@ def analyze_pairwise_sbc(df):
         row_sbc = group[group['has_sbc'] == True]
         row_no = group[group['has_sbc'] == False]
         if row_sbc.empty or row_no.empty: continue
+        
         base_cfg = name[4]
         if base_cfg not in pairwise_stats: pairwise_stats[base_cfg] = {'sbc': 0, 'no_sbc': 0, 'tie': 0}
         
@@ -386,10 +436,12 @@ def analyze_sbc_effectiveness(df):
         row_sbc = group[group['has_sbc'] == True]
         row_no = group[group['has_sbc'] == False]
         if row_sbc.empty or row_no.empty: continue
+        
         obj_sbc = row_sbc['objective'].values[0]
         obj_no = row_no['objective'].values[0]
         if pd.isna(obj_sbc): obj_sbc = -1
         if pd.isna(obj_no): obj_no = -1
+        
         winner = 'tie'
         if obj_sbc > obj_no: winner = 'sbc'
         elif obj_no > obj_sbc: winner = 'no_sbc'
@@ -400,6 +452,7 @@ def analyze_sbc_effectiveness(df):
             if pd.isna(t_no): t_no = float('inf')
             if t_sbc < t_no: winner = 'sbc'
             elif t_no < t_sbc: winner = 'no_sbc'
+        
         if T not in stats[method]: stats[method][T] = {'sbc': 0, 'no_sbc': 0, 'tie': 0}
         stats[method][T][winner] += 1
 
@@ -422,12 +475,7 @@ def analyze_sbc_effectiveness(df):
             print(f"{T:<5} | {sbc_w:<10} | {no_w:<12} | {tie:<5} | {conc}")
 
 def analyze_size_comparison(df):
-    """
-    Compares Average Variables and Clauses between BDD (p1-p3) and LCG (p4-p6).
-    Broken down by Instance to validate space complexity vs |V|.
-    """
     if df.empty: return
-    
     df_ms = df[df['method'] == 'maxsat'].copy()
     if df_ms.empty: return
     
@@ -438,64 +486,46 @@ def analyze_size_comparison(df):
         
     df_ms['Enc_Type'] = df_ms['config'].apply(get_enc_type)
     df_target = df_ms[df_ms['Enc_Type'].isin(['BDD', 'LCG'])]
-    
     if df_target.empty: return
     
     df_target['variables'] = pd.to_numeric(df_target['variables'], errors='coerce')
     df_target['clauses'] = pd.to_numeric(df_target['clauses'], errors='coerce')
     
-    # 按照图规模排序
     target_order = ['burma14', 'P-n16-k8', 'ulysses22', 'P-n23-k8', 'bays29', 'A-n32-k5']
     
     print("\n" + "="*60)
     print(">>> SIZE COMPARISON BY INSTANCE")
     print("="*60)
-    # [Modified] Header removed Ratio column
     print(f"{'Instance':<12} | {'Type':<5} | {'Variables':<12} | {'Clauses':<12}")
     print("-" * 60)
 
-    # Group by Instance AND Enc_Type
     grouped = df_target.groupby(['instance', 'Enc_Type'])[['variables', 'clauses']].mean()
     
     for inst in target_order:
-        if inst not in df_target['instance'].values:
-            continue
-            
+        if inst not in df_target['instance'].values: continue
         try:
             if (inst, 'BDD') in grouped.index:
                 bdd_vars = grouped.loc[(inst, 'BDD'), 'variables']
                 bdd_cls  = grouped.loc[(inst, 'BDD'), 'clauses']
-            else:
-                bdd_vars, bdd_cls = np.nan, np.nan
+            else: bdd_vars, bdd_cls = np.nan, np.nan
             
             if (inst, 'LCG') in grouped.index:
                 lcg_vars = grouped.loc[(inst, 'LCG'), 'variables']
                 lcg_cls  = grouped.loc[(inst, 'LCG'), 'clauses']
-            else:
-                lcg_vars, lcg_cls = np.nan, np.nan
+            else: lcg_vars, lcg_cls = np.nan, np.nan
             
-            # [Modified] Printed rows removed empty column
             print(f"{inst:<12} | {'BDD':<5} | {int(bdd_vars) if pd.notnull(bdd_vars) else '-':<12} | {int(bdd_cls) if pd.notnull(bdd_cls) else '-':<12}")
             print(f"{'':<12} | {'LCG':<5} | {int(lcg_vars) if pd.notnull(lcg_vars) else '-':<12} | {int(lcg_cls) if pd.notnull(lcg_cls) else '-':<12}")
             
-            # Calculate Ratios
-            r_var_str = ""
-            r_cls_str = ""
-            
+            r_var_str, r_cls_str = "", ""
             if pd.notnull(bdd_vars) and pd.notnull(lcg_vars) and lcg_vars > 0:
-                r_var = bdd_vars / lcg_vars
-                r_var_str = f"Vars: {r_var:.1f}x"
-                
+                r_var_str = f"Vars: {bdd_vars / lcg_vars:.1f}x"
             if pd.notnull(bdd_cls) and pd.notnull(lcg_cls) and lcg_cls > 0:
-                r_cls = bdd_cls / lcg_cls
-                r_cls_str = f"Cls:  {r_cls:.1f}x"
+                r_cls_str = f"Cls:  {bdd_cls / lcg_cls:.1f}x"
             
-            # [Modified] Last row aligned
             print(f"{'':<12} | {'Ratio':<5} | {r_var_str:<12} | {r_cls_str:<12}")
             print("-" * 60)
-            
-        except Exception as e:
-            print(f"Error processing {inst}: {e}")
+        except Exception as e: print(f"Error processing {inst}: {e}")
 
 if __name__ == "__main__":
     log_file = 'full_experiment.log' 

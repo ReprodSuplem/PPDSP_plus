@@ -307,7 +307,7 @@ class PPDSP_MIP(PPDSP_reform):
 		self.mipEq9()
 		self.mipEq10()
 		self.mipRec() if self.knn == 0 else	self.mipKnn()
-		self.mipSbc()
+		#self.mipSbc()
 		self.mipObj()
 
 	def writeLpFile(self):
