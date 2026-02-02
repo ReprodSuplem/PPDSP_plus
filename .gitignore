@@ -8,10 +8,12 @@ __pycache__/
 
 # log
 *.log
+!full_experiment.log
 *.out
 
 # output data
 *.csv
+!experiment_results.csv
 *.lp
 *.wcnf
 *.meta
