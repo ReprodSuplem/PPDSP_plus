@@ -210,7 +210,7 @@ class PPDSP_MaxSAT_p3(PPDSP_reform):
 
 						#print("Current max varID:", self.vpool.top) # Show current max varID in vpool
 
-						cnf_obj = PBEnc.equals(lits = litList, weights = weightList, bound = equalBound, vpool = self.vpool, encoding = EncType.best)
+						cnf_obj = PBEnc.equals(lits = litList, weights = weightList, bound = equalBound, vpool = self.vpool, encoding = EncType.bdd)
 						for clause in cnf_obj.clauses:
 							self.cnf.append([-self.xVarList[i][j][k]] + clause, update_vpool=True)
 		#print(self.cnf.clauses)
