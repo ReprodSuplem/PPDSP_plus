@@ -21,6 +21,8 @@ __pycache__/
 *.meta
 *.asp
 results*/
+!results_analyze/
+!results_analyze/**
 
 # macOS
 .DS_Store
