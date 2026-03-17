@@ -9,11 +9,13 @@ __pycache__/
 # log
 *.log
 !full_experiment.log
+!full_experiment_*.log
 *.out
 
 # output data
 *.csv
 !experiment_results.csv
+!experiment_results_PB.csv
 *.lp
 *.wcnf
 *.meta
