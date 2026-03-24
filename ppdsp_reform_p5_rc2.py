@@ -6,8 +6,8 @@ from pysat.pb import *
 from pysat.formula import *
 
 class PPDSP_MaxSAT_p5(PPDSP_reform):
-	def __init__(self, tsplib, request, vehicle, knn):
-		super().__init__(tsplib, request, vehicle, knn)
+	def __init__(self, tsplib, request, vehicle, knn, increment=None):
+		super().__init__(tsplib, request, vehicle, knn, increment)
 		self.knn = int(knn)
 		self.wcnf = WCNF()
 		self.cnf = CNF()
@@ -242,16 +242,19 @@ class PPDSP_MaxSAT_p5(PPDSP_reform):
 		self.wcnf.to_file(self.insName + ".wcnf")
 		PPDSP_utils.export_meta(self, self.insName + ".meta")
 
-	def solve(self, verbose=1, time_limit=5):
+	def solve(self, verbose=1, time_limit=5, assumption_file=None):
 		wcnf_file = self.insName + ".wcnf"
 		lastY = self.getLastYVarID()
 		meta_file = self.insName + ".meta"
-		assumption_file = wcnf_file + ".asp"
 		log_file  = wcnf_file + ".out"
 
-		# Run uwrmaxsat with meta file and assumption file
-		# -ppdsp-assume={assumption_file}
-		cmd = f"stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} -ppdsp={meta_file} {wcnf_file} | tee {log_file}"
+		# Run uwrmaxsat with meta file
+		cmd = f"stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} -ppdsp={meta_file}"
+		if assumption_file is not None and os.path.exists(assumption_file):
+			cmd += f" -ppdsp-assume={assumption_file}"
+			print(f"  [Info] Injected Assumption file: {assumption_file}")
+			
+		cmd += f" {wcnf_file} | tee {log_file}"
 		print(f"[UWrMaxSAT] Running command:\n  {cmd}")
 		os.system(cmd)
 		# PPDSP_utils.run_uwrmaxsat(cmd, log_file, time_limit)

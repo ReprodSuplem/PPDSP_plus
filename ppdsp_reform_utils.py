@@ -2,7 +2,93 @@
 
 from z3 import *
 
+class GlobalVariableRegistry:
+
+	# ==========================================
+	# Global variable registry for incremental model
+	# ==========================================
+	def __init__(self):
+		self.varCounter = 0
+		self.varDict = {}
+
+	def get_id(self, var_type, *args):
+		"""
+		According to variable type and indices, generate or retrieve a fixed global ID.
+		var_type: 'x', 'y', 'u', 'nu', 'h'
+		args: corresponding index combinations, e.g., (t, o, d)
+		"""
+		key = (var_type,) + args
+		if key not in self.varDict:
+			self.varCounter += 1
+			self.varDict[key] = self.varCounter
+		return self.varDict[key]
+
+	def get_max_core_id(self):
+		"""
+		Return max ID assigned so far, used as a safe starting point for vpool.
+		"""
+		return self.varCounter
+
 class PPDSP_utils:
+
+	# ----------------------------
+	# Parse log file to generate Assumption
+	# ----------------------------
+	@staticmethod
+	def parse_and_save_assumption(log_file, assumption_file, lastY, mode):
+		"""
+		From the log file, extract xVars and yVars, and generate a standard assumption file.
+		Compatible with both MaxSAT (.wcnf.out) and CPLEX (.lp.out) logs.
+		"""
+		import os
+		if not os.path.exists(log_file):
+			print(f"  [Warning] Log file {log_file} not found.")
+			return False
+
+		core_lits = []
+		
+		if mode == "maxsat":
+			with open(log_file, "r") as f:
+				for line in f:
+					line = line.strip()
+					if line.startswith("v "):
+						lits = line.split()[1:]
+						for lit_str in lits:
+							try:
+								lit = int(lit_str)
+								if abs(lit) <= lastY:
+									core_lits.append(lit)
+							except ValueError:
+								pass
+		elif mode == "mip":
+			positive_vars = set()
+			raw_model_found = False
+			with open(log_file, "r") as f:
+				lines = f.readlines()
+				for i, line in enumerate(lines):
+					if line.startswith("===== RAW XY MODEL ====="):
+						raw_model_found = True
+						if i + 1 < len(lines):
+							val_str = lines[i+1].strip()
+							if val_str:
+								positive_vars = set(int(v) for v in val_str.split())
+						break
+			
+			if raw_model_found:
+				for vid in range(1, lastY + 1):
+					if vid in positive_vars:
+						core_lits.append(vid)
+					else:
+						core_lits.append(-vid)
+		
+		if core_lits:
+			with open(assumption_file, "w") as f:
+				f.write(" ".join(map(str, core_lits)) + "\n")
+			print(f"  [Info] Saved {len(core_lits)} core assumption literals to {assumption_file}")
+			return True
+		else:
+			print("  [Warning] No valid literals found in log. Assumption failed.")
+			return False
 
 	# ----------------------------
 	# Convert CPLEX varNames to int literal IDs

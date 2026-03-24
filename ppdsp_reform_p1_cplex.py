@@ -2,12 +2,13 @@
 
 from ppdsp_reform_ins_gen import PPDSP_reform
 from ppdsp_reform_utils import PPDSP_utils
+import os
 import cplex
 from cplex import SparsePair
 
 class PPDSP_MIP(PPDSP_reform):
-	def __init__(self, tsplib, request, vehicle, knn):
-		super().__init__(tsplib, request, vehicle, knn)
+	def __init__(self, tsplib, request, vehicle, knn, increment=None):
+		super().__init__(tsplib, request, vehicle, knn, increment)
 		self.knn = int(knn)
 		self.cpx = cplex.Cplex()
 		self.cpx.objective.set_sense(self.cpx.objective.sense.maximize)
@@ -313,7 +314,7 @@ class PPDSP_MIP(PPDSP_reform):
 	def writeLpFile(self):
 		self.cpx.write(self.insName + ".lp", filetype="lp")
 
-	def solve(self, time_limit=5):
+	def solve(self, time_limit=5, assumption_file=None):
 		import time
 		start_time = time.time()
 
@@ -342,8 +343,7 @@ class PPDSP_MIP(PPDSP_reform):
 		'''
 
 		# Read assumption file if exists, and set MIP start
-		assumption_file = self.insName + ".lp.asp"
-		if assumption_file and False:
+		if assumption_file is not None and os.path.exists(assumption_file):
 			print(f"[CPLEX] Reading assumption from {assumption_file} ...")
 			lits = PPDSP_utils.read_assumption_literals(assumption_file)
 

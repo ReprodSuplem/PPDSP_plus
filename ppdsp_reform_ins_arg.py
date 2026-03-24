@@ -365,7 +365,7 @@ def gen_all_ins_arg(tspPath: str,
 					repetRateList: List[float] = [3, 2.5, 2, 1.5, 1],
 					start_k: int = 3,
 					sizeOfGList: int = 2,
-					skip: int = 2,
+					skip: int = 1,
 					outDir: str = ".",
 					seed: int = None):
 	"""

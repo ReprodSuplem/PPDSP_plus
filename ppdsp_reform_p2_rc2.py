@@ -6,8 +6,8 @@ from pysat.pb import *
 from pysat.formula import *
 
 class PPDSP_MaxSAT_p2(PPDSP_reform):
-	def __init__(self, tsplib, request, vehicle, knn):
-		super().__init__(tsplib, request, vehicle, knn)
+	def __init__(self, tsplib, request, vehicle, knn, increment=None):
+		super().__init__(tsplib, request, vehicle, knn, increment)
 		self.knn = int(knn)
 		self.wcnf = WCNF()
 		self.cnf = CNF()
@@ -152,6 +152,8 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 				self.exactlyOne(self.nuVarList[t][i])
 
 	def resetVarIDforMaxSAT(self):
+		if self.registry is not None:
+			return
 		self.varID = self.hVarList[0][0] - 1 # Reset to varID to 1st variable 'h^t_v'
 
 	def genHardClauseForEq11(self): # Literals allocation for Eq.10
@@ -287,7 +289,7 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 		self.genHardClauseForOneHotNuVar()
 		self.genHardClauseForEq11()
 		#self.printHVarLits()
-		self.vpool = IDPool(start_from = 1 + self.varID) # Setup vpool starting from varID+1 before running Eq.10
+		self.vpool = IDPool(start_from = self.get_vpool_start_id()) # Setup vpool starting from varID+1 before running Eq.10
 		self.genHardClauseForEq10()
 		self.genHardClauseFoRec() if self.knn == 0 else self.genHardClauseForKnn()
 		self.genHardClauseForSbc()
@@ -296,12 +298,18 @@ class PPDSP_MaxSAT_p2(PPDSP_reform):
 		self.wcnf.extend(self.cnf)
 		self.wcnf.to_file(self.insName + ".wcnf")
 
-	def solve(self, verbose=1, time_limit=5):
+	def solve(self, verbose=1, time_limit=5, assumption_file=None):
 		wcnf_file = self.insName + ".wcnf"
 		lastY = self.getLastYVarID()
 		log_file  = wcnf_file + ".out"
 
-		cmd = f"stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY} {wcnf_file} | tee {log_file}"
+		# Run uwrmaxsat with meta file
+		cmd = f"stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time={time_limit} -ppdsp-lastY={lastY}"
+		if assumption_file is not None and os.path.exists(assumption_file):
+			cmd += f" -ppdsp-assume={assumption_file}"
+			print(f"  [Info] Injected Assumption file: {assumption_file}")
+			
+		cmd += f" {wcnf_file} | tee {log_file}"
 		print(f"[UWrMaxSAT] Running command:\n  {cmd}")
 		os.system(cmd)
 		# PPDSP_utils.run_uwrmaxsat(cmd, log_file, time_limit)
