@@ -344,8 +344,20 @@ static inline int log2(int n) { int i=0; while (n>>=1) i++; return i; }
 lbool MsSolver::satSolveLimited(Minisat::vec<Lit> &assump_ps)
 {
     // Inject PPDSP assumptions
-    for (int i = 0; i < ppdsp_assumps.size(); i++)
-        assump_ps.push(ppdsp_assumps[i]);
+    //for (int i = 0; i < ppdsp_assumps.size(); i++)
+    //    assump_ps.push(ppdsp_assumps[i]);
+    
+    for (int i = 0; i < ppdsp_assumps.size(); i++) {
+        Lit p = ppdsp_assumps[i];
+        
+        // Lit polarity: sign() method is used to check the polarity of a literal. 
+        // sign(p) returns true if p is negated, and false if p is a positive literal.
+        // We want the polarity to exactly match the sign.
+        bool dir = sign(p);
+
+        // setPolarity will tell the underlying SAT Solver: "When you decide to branch on var(p), please prefer dir"
+        sat_solver.setPolarity(var(p), LBOOL(dir));
+    }
 
     if (ipamir_used) {
         for (int i = 0; i < global_assumptions.size(); i++) assump_ps.push(global_assumptions[i]);
@@ -382,8 +394,8 @@ lbool MsSolver::satSolveLimited(Minisat::vec<Lit> &assump_ps)
     }
 
     // Remove PPDSP assumptions after solving
-    if (ppdsp_assumps.size() > 0)
-        assump_ps.shrink(ppdsp_assumps.size());
+    //if (ppdsp_assumps.size() > 0)
+    //    assump_ps.shrink(ppdsp_assumps.size());
 
     return status;
 }

@@ -81,7 +81,7 @@ if __name__ == "__main__":
 	# ==========================================
 	# Time Bank Manager
 	# ==========================================
-	TOTAL_TIME_BUDGET = 480.0  # Total time-limit
+	TOTAL_TIME_BUDGET = 3600.0  # Total time-limit
 	num_steps = len(sequence)
 	base_time_limit = TOTAL_TIME_BUDGET / num_steps
 	accumulated_saved_time = 0.0
