@@ -82,41 +82,38 @@ if __name__ == "__main__":
     print("="*70)
 
     # ==========================================
-    # [NEW] Time Bank Budgeting Strategy Selection
+    # [NEW] Dynamic Recalibration Time Manager
     # ==========================================
     TOTAL_TIME_BUDGET = 3600.0
     num_steps = len(sequence)
     
-    # 获取真实的节点数 |V| (即 adjMatrx 的维度)
+    # 获取真实的节点数 |V|
     node_file = f'2DNode_{tsplib}.csv'
     if not os.path.exists(node_file):
         print(f"  [Fatal] Node file {node_file} missing! Cannot determine |V|.")
         sys.exit(1)
         
     with open(node_file, 'r') as f:
-        nOfNode = sum(1 for line in f if line.strip())
+        V_nodes = sum(1 for line in f if line.strip())
     
-    # 根据传入的 strategy 参数动态切换权重
+    # 根据传入的 strategy 参数静态分配阶段权重 W_i
     if strategy == "uni":
-        print("  [Time Manager] Strategy: Uniform Rollover (-Uni)")
-        weights = [1 for _ in sequence]
+        print("  [Time Manager] Strategy: Uniform Recalibration (-Uni)")
+        weights = [1.0 for _ in sequence]
         
     elif strategy == "cpx":
         print("  [Time Manager] Strategy: Complexity-Aware Time Bank (-Cpx)")
-        weights = [int(v) * (nOfNode * int(k) + int(r)) for (r, v, k) in sequence]
+        # W_i = |T_i| * (|V| * k_i + |R_i|)
+        weights = [float(int(v) * (V_nodes * int(k) + int(r))) for (r, v, k) in sequence]
         
     else:
         print(f"  [Fatal] Unknown strategy: '{strategy}'. Please use 'uni' or 'cpx'.")
         sys.exit(1)
     
-    # --- 结算基础时间预算 ---
-    total_weight = sum(weights)
-    base_budgets = [TOTAL_TIME_BUDGET * (w / total_weight) for w in weights]
-    accumulated_saved_time = 0.0
+    # 新机制：不再追踪“存下的时间”，而是追踪“已消耗的总时间”
+    total_consumed_time = 0.0
     
-    print(f"  [Time Manager] Total Budget: {TOTAL_TIME_BUDGET}s | Steps: {num_steps} | Map Nodes |V|: {nOfNode}")
-    for i, (r, v, k) in enumerate(sequence):
-        print(f"    - Step {i+1} (R={r}, V={v}, K={k}): Weight = {weights[i]}, Base Budget = {base_budgets[i]:.2f}s")
+    print(f"  [Time Manager] Global Budget: {TOTAL_TIME_BUDGET}s | Steps: {num_steps} | Map Nodes |V|: {V_nodes}")
 
     global_registry = GlobalVariableRegistry()
     previous_assumption_file = None
@@ -167,30 +164,32 @@ if __name__ == "__main__":
             sys.exit(1)
 
         # ==========================================
-        # 3. Solve the current sub-problem with Dynamic Time Allocation
+        # 3. Solve the current sub-problem with Dynamic Recalibration
         # ==========================================
-        # Retrieve the specific base_time_limit for this step
-        base_time_limit = base_budgets[idx]
-        current_time_limit = base_time_limit + accumulated_saved_time
-        print(f"  [Time Manager] Base: {base_time_limit:.2f}s | Saved from past: {accumulated_saved_time:.2f}s | Budget for this step: {current_time_limit:.2f}s")
+        # 1. 计算全局剩余预算 (B_global - sum(tau_j))
+        # 使用 max(1.0, ...) 防止由于系统时间误差导致预算为负，至少给1秒
+        remaining_budget = max(1.0, TOTAL_TIME_BUDGET - total_consumed_time)
+        
+        # 2. 计算从当前阶段到最后阶段的总权重 (sum_{j=i}^N W_j)
+        remaining_weight = sum(weights[idx:])
+        
+        # 3. 动态计算本阶段的限时 L_i
+        current_time_limit = remaining_budget * (weights[idx] / remaining_weight)
+        
+        print(f"  [Time Manager] Global Remaining Budget: {remaining_budget:.2f}s | Future Weight Sum: {remaining_weight}")
+        print(f"  [Time Manager] Recalibrated Budget for this step: {current_time_limit:.2f}s")
         
         start_time = time.time()
         
         # Solve the current sub-problem
         solver.solve(time_limit=int(current_time_limit), assumption_file=previous_assumption_file)
         
-        # Record the end time after solving, calculate actual elapsed time
+        # 记录真实消耗的时间 (tau_i)
         elapsed_time = time.time() - start_time
         
-        # Calculate time banking
-        if elapsed_time < current_time_limit:
-            # Save the unused time for future steps
-            accumulated_saved_time = current_time_limit - elapsed_time
-            print(f"  [Time Manager] Solved early in {elapsed_time:.2f}s! Banking {accumulated_saved_time:.2f}s for next steps.")
-        else:
-            # Reset the time bank if we exhausted the budget
-            accumulated_saved_time = 0.0
-            print(f"  [Time Manager] Time limit exhausted ({elapsed_time:.2f}s used). No time banked.")
+        # 累计已消耗的总时间 (\sum tau_j)
+        total_consumed_time += elapsed_time
+        print(f"  [Time Manager] Step {idx+1} consumed {elapsed_time:.2f}s. Total Consumed: {total_consumed_time:.2f}s.")
 
         # ==========================================
         # 4. Parse the solver's log to extract the new assumption for the next round
