@@ -19,7 +19,7 @@ __pycache__/
 *.lp
 *.wcnf
 *.meta
-*.asp
+*.asm
 results*/
 !results_analyze/
 !results_analyze/**
