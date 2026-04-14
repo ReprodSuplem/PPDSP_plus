@@ -343,10 +343,20 @@ static inline int log2(int n) { int i=0; while (n>>=1) i++; return i; }
 
 lbool MsSolver::satSolveLimited(Minisat::vec<Lit> &assump_ps)
 {
-    // Inject PPDSP assumptions
-    //for (int i = 0; i < ppdsp_assumps.size(); i++)
-    //    assump_ps.push(ppdsp_assumps[i]);
-    
+    // ====================================================================
+    // MODE 1: Assumption (Hard Lock) - Use this for Asm-Uni / Asm-Cpx
+    // ====================================================================
+    /*
+    // Inject PPDSP assumptions as hard constraints
+    for (int i = 0; i < ppdsp_assumps.size(); i++)
+        assump_ps.push(ppdsp_assumps[i]);
+    */
+
+    // ====================================================================
+    // MODE 2: Polarity (Phase-guided) - Use this for PhG-Uni / PhG-Cpx
+    // ====================================================================
+    // /*
+    // Inject PPDSP assumptions as soft polarities
     for (int i = 0; i < ppdsp_assumps.size(); i++) {
         Lit p = ppdsp_assumps[i];
         
@@ -358,11 +368,15 @@ lbool MsSolver::satSolveLimited(Minisat::vec<Lit> &assump_ps)
         // setPolarity will tell the underlying SAT Solver: "When you decide to branch on var(p), please prefer dir"
         sat_solver.setPolarity(var(p), LBOOL(dir));
     }
+    // */
+    // ====================================================================
+
 
     if (ipamir_used) {
         for (int i = 0; i < global_assumptions.size(); i++) assump_ps.push(global_assumptions[i]);
         for (int i = 0; i < harden_assump.size(); i++)      assump_ps.push (harden_assump[i]);
     }
+    
     // ===== (Begin) Timeout during satSolveLimited slice =====
     lbool status = l_Undef;
     
@@ -393,9 +407,16 @@ lbool MsSolver::satSolveLimited(Minisat::vec<Lit> &assump_ps)
         if (global_assumptions.size() > 0) assump_ps.shrink(global_assumptions.size());
     }
 
+    // ====================================================================
+    // CLEANUP FOR MODE 1 ONLY
+    // If you are using MODE 1 (Assumption), this MUST be active.
+    // If you are using MODE 2 (Polarity), you should comment this out.
+    // ====================================================================
+    /*
     // Remove PPDSP assumptions after solving
-    //if (ppdsp_assumps.size() > 0)
-    //    assump_ps.shrink(ppdsp_assumps.size());
+    if (ppdsp_assumps.size() > 0)
+        assump_ps.shrink(ppdsp_assumps.size());
+    */
 
     return status;
 }
