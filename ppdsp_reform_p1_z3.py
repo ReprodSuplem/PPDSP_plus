@@ -304,7 +304,7 @@ class PPDSP_SMT2_p1(PPDSP_reform):
 		opt = self.smt2Opt
 
 		# Read assumption file if exists, and set assumptions
-		assumption_file = self.insName + ".smt2.asp"
+		assumption_file = self.insName + ".smt2.asm"
 		assumption_faile = False
 		if assumption_file and False: #--- IGNORE ---
 			print(f"[Z3] Reading assumption from {assumption_file} ...")

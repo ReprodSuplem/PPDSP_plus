@@ -362,9 +362,9 @@ def gen_vehic_caps(fullRequestList: List[List[int]], cutLens: List[int], tspName
 		df.to_csv(csv_filename, header=False, index=False)
 
 def gen_all_ins_arg(tspPath: str,
-					repetRateList: List[float] = [3, 2.5, 2, 1.5, 1],
-					start_k: int = 3,
-					sizeOfGList: int = 2,
+					repetRateList: List[float] = [3.5, 3, 2.5, 2, 1.5, 1],
+					start_k: int = 2,
+					sizeOfGList: int = 3,
 					skip: int = 1,
 					outDir: str = ".",
 					seed: int = None):
