@@ -8,12 +8,17 @@ __pycache__/
 
 # log
 *.log
+!Asm*.log
+!PhG*.log
+!MIP*.log
+!Mono*.log
 !full_experiment.log
 !full_experiment_*.log
 *.out
 
 # output data
 *.csv
+!incr_exp_results_*.csv
 !experiment_results.csv
 !experiment_results_PB.csv
 *.lp
