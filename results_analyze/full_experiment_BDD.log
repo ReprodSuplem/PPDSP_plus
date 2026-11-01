@@ -1,0 +1,1562 @@
+nohup: ignoring input
+Starting Experiments...
+>>> Starting Benchmarks for: burma14
+Processing burma14 | Request=7 | Vehicle=2
+========================================================
+[2026-02-06 11:31:14] Running: python main.py maxsat p3 burma14 7 2 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 8270
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         45348                                         |
+c |  Number of clauses:          268691 (incl.          158 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 0.25 s
+c Found solution: 7272
+c [Elapsed time] 0.27 s
+c Found solution: 6620
+c [Elapsed time] 0.28 s
+c Found solution: 6286
+c [Elapsed time] 3.67 s
+c Found solution: 5477
+c [Elapsed time] 3.67 s
+c Found solution: 5374
+c [Elapsed time] 3.84 s
+c Found solution: 5344
+c [Elapsed time] 5.78 s
+c Found solution: 5293
+c [Elapsed time] 36.53 s
+c Found solution: 5190
+c [Elapsed time] 38.33 s
+c Found solution: 5126
+c [Elapsed time] 41.27 s
+c Found solution: 5108
+c [Elapsed time] 58.33 s
+c Found solution: 5002
+c [Elapsed time] 65.21 s
+c Found solution: 4989
+c [Elapsed time] 75.62 s
+c Found solution: 4986
+c [Elapsed time] 81.20 s
+c Found solution: 4985
+c [Elapsed time] 81.68 s
+c Found solution: 4981
+c [Elapsed time] 81.98 s
+c Found solution: 4979
+c [1mOptimal solution: 4979[0m
+c _______________________________________________________________________________
+c 
+c restarts               : 35647
+c conflicts              : 7445039        (90810 /sec)
+c decisions              : 39431580       (0.00 % random) (480962 /sec)
+c propagations           : 603032717      (7355415 /sec)
+c conflict literals      : 138675444      (21.79 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 328.00 MB
+c CPU time               : 81.9849 s
+c OptExp Enc: Srt/BDD/Add: 28 0 0
+c _______________________________________________________________________________
+o 4979
+s OPTIMUM FOUND
+v 2 28 54 77 97 107 113 160 176 186 205 266 285 307 316 371 379 394 395 397 399 401 403 406
+[rc2] Generating instance: p3_burma14_r7v2k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=406 p3_burma14_r7v2k3_BDD.wcnf | tee p3_burma14_r7v2k3_BDD.wcnf.out
+Vehicle 0: d → 3 → 11 → 5 → 6 → 12 → 7 → 8 → 0 → 1 → d, (requests = [1, 2, 3, 4, 5])
+Vehicle 1: d → 0 → 8 → 7 → 12 → 6 → 4 → d, (requests = [0, 6])
+======== PPDSP OBJECTIVE ========
+Profit    = 4135
+Cost      = 844
+Objective = 3291
+=================================
+[2026-02-06 11:32:38] finished
+Processing burma14 | Request=10 | Vehicle=2
+========================================================
+[2026-02-06 11:32:38] Running: python main.py maxsat p3 burma14 10 2 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 11952
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         48324                                         |
+c |  Number of clauses:          285722 (incl.          166 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 1.11 s
+c Found solution: 9797
+c [Elapsed time] 3.65 s
+c Found solution: 8991
+c [Elapsed time] 3.70 s
+c Found solution: 8725
+c [Elapsed time] 52.00 s
+c Found solution: 8140
+c [Elapsed time] 52.82 s
+c Found solution: 7788
+c [Elapsed time] 52.83 s
+c Found solution: 7780
+c [Elapsed time] 52.85 s
+c Found solution: 7646
+c [Elapsed time] 136.90 s
+c Found solution: 7607
+c [Elapsed time] 142.81 s
+c Found solution: 7557
+c [Elapsed time] 142.83 s
+c Found solution: 7515
+c [Elapsed time] 167.41 s
+c Found solution: 7481
+c [Elapsed time] 185.23 s
+c Found solution: 7470
+c [Elapsed time] 190.22 s
+c Found solution: 7463
+c [Elapsed time] 190.90 s
+c Found solution: 7460
+c [Elapsed time] 198.16 s
+c Found solution: 7457
+c [1mOptimal solution: 7457[0m
+c _______________________________________________________________________________
+c 
+c restarts               : 71418
+c conflicts              : 14548036       (72910 /sec)
+c decisions              : 68266434       (0.00 % random) (342130 /sec)
+c propagations           : 1314717239     (6588958 /sec)
+c conflict literals      : 315957159      (24.14 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 425.00 MB
+c CPU time               : 199.533 s
+c OptExp Enc: Srt/BDD/Add: 42 0 0
+c _______________________________________________________________________________
+o 7457
+s OPTIMUM FOUND
+v 2 28 54 97 107 122 127 161 176 186 205 238 241 264 285 307 319 344 354 371 379 394 395 397 399 403 406 407 410 412
+[rc2] Generating instance: p3_burma14_r10v2k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=412 p3_burma14_r10v2k3_BDD.wcnf | tee p3_burma14_r10v2k3_BDD.wcnf.out
+Vehicle 0: d → 3 → 11 → 6 → 12 → 7 → 8 → 9 → 0 → 1 → d, (requests = [1, 2, 3, 5, 7])
+Vehicle 1: d → 0 → 8 → 10 → 7 → 12 → 6 → 4 → 11 → 3 → 2 → d, (requests = [0, 6, 8, 9])
+======== PPDSP OBJECTIVE ========
+Profit    = 5524
+Cost      = 1029
+Objective = 4495
+=================================
+[2026-02-06 11:36:01] finished
+Processing burma14 | Request=13 | Vehicle=3
+========================================================
+[2026-02-06 11:36:01] Running: python main.py maxsat p3 burma14 13 3 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 23028
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         62689                                         |
+c |  Number of clauses:          370499 (incl.          258 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 0.43 s
+c Found solution: 22589
+c [Elapsed time] 0.46 s
+c Found solution: 20776
+c [Elapsed time] 37.76 s
+c Found solution: 19259
+c [Elapsed time] 79.48 s
+c Found solution: 18146
+c [Elapsed time] 81.79 s
+c Found solution: 17179
+c [Elapsed time] 91.81 s
+c Found solution: 17147
+c [Elapsed time] 413.40 s
+c Found solution: 17112
+c [Elapsed time] 464.45 s
+c Found solution: 17061
+c [Elapsed time] 468.87 s
+c Found solution: 17031
+c [Elapsed time] 473.96 s
+c Found solution: 17024
+c [Elapsed time] 494.51 s
+c Found solution: 16930
+c [Elapsed time] 495.74 s
+c Found solution: 16910
+c [Elapsed time] 583.80 s
+c Found solution: 16869
+c [Elapsed time] 592.89 s
+c Found solution: 16835
+c [Elapsed time] 929.44 s
+c Found solution: 16834
+c [Elapsed time] 931.33 s
+c Found solution: 16833
+c [Elapsed time] 936.11 s
+c Found solution: 16829
+c [1mOptimal solution: 16829[0m
+c _______________________________________________________________________________
+c 
+c restarts               : 289590
+c conflicts              : 41032213       (43756 /sec)
+c decisions              : 285373509      (0.00 % random) (304320 /sec)
+c propagations           : 4697966691     (5009869 /sec)
+c conflict literals      : 1177403046     (25.29 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 961.00 MB
+c CPU time               : 937.742 s
+c OptExp Enc: Srt/BDD/Add: 132 0 0
+c _______________________________________________________________________________
+o 16829
+s OPTIMUM FOUND
+v 14 54 63 97 107 122 127 159 176 186 205 238 241 264 285 307 319 344 354 371 379 394 420 432 469 489 491 552 568 577 590 592 595 598 603 606 608 610 614 617 619 624 625
+[rc2] Generating instance: p3_burma14_r13v3k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=627 p3_burma14_r13v3k3_BDD.wcnf | tee p3_burma14_r13v3k3_BDD.wcnf.out
+Vehicle 0: d → 3 → 11 → 4 → 6 → 12 → 7 → 8 → 9 → 0 → d, (requests = [1, 2, 3, 7, 10, 12])
+Vehicle 1: d → 0 → 8 → 10 → 7 → 12 → 6 → 4 → 11 → 3 → 2 → d, (requests = [0, 6, 8, 9])
+Vehicle 2: d → 2 → 11 → 5 → 6 → 12 → 7 → 0 → 1 → d, (requests = [4, 5, 11])
+======== PPDSP OBJECTIVE ========
+Profit    = 7676
+Cost      = 1477
+Objective = 6199
+=================================
+[2026-02-06 11:51:52] finished
+Processing burma14 | Request=16 | Vehicle=3
+========================================================
+[2026-02-06 11:51:52] Running: python main.py maxsat p3 burma14 16 3 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 28299
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         65475                                         |
+c |  Number of clauses:          388929 (incl.          264 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 1.13 s
+c Found solution: 25219
+c [Elapsed time] 6.84 s
+c Found solution: 24972
+c [Elapsed time] 20.24 s
+c Found solution: 23663
+c [Elapsed time] 169.20 s
+c Found solution: 22894
+c [Elapsed time] 196.25 s
+c Found solution: 21841
+c [Elapsed time] 211.43 s
+c Found solution: 21620
+c [Elapsed time] 211.44 s
+c Found solution: 21552
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c [UWrMaxSAT] Timeout reached.
+c [1mSATISFIABLE: Best solution found: 21552[0m
+v 9 15 40 45 62 77 97 100 123 140 150 159 176 186 207 228 252 264 271 286 307 318 323 344 353 371 387 406 417 432 437 469 489 492 505 541 552 568 578 590 595 598 603 606 608 610 614 617 619 624 625 628 632 634
+c _______________________________________________________________________________
+c 
+c restarts               : 1082426
+c conflicts              : 87843559       (24609 /sec)
+c decisions              : 486515216      (0.00 % random) (136295 /sec)
+c propagations           : 13050096283    (3655922 /sec)
+c conflict literals      : 2999916157     (26.63 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 979.00 MB
+c CPU time               : 3569.58 s
+c OptExp Enc: Srt/BDD/Add: 5 0 0
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_burma14_r16v3k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=636 p3_burma14_r16v3k3_BDD.wcnf | tee p3_burma14_r16v3k3_BDD.wcnf.out
+Vehicle 0: d → 3 → 2 → 11 → 4 → 5 → 6 → 12 → 7 → 1 → 0 → 8 → 10 → 9 → d, (requests = [2, 3, 7, 10, 12, 13, 15])
+Vehicle 1: d → 8 → 9 → 0 → 10 → 7 → 12 → 6 → 5 → 4 → 11 → 2 → 3 → d, (requests = [0, 6, 8, 9, 14])
+Vehicle 2: d → 3 → 2 → 11 → 5 → 6 → 12 → 7 → 1 → 10 → 8 → 0 → d, (requests = [4, 5, 11])
+======== PPDSP OBJECTIVE ========
+Profit    = 8701
+Cost      = 1954
+Objective = 6747
+=================================
+[2026-02-06 12:51:56] finished
+Processing burma14 | Request=19 | Vehicle=4
+========================================================
+[2026-02-06 12:51:56] Running: python main.py maxsat p3 burma14 19 4 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 44148
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        100922                                         |
+c |  Number of clauses:          599532 (incl.          364 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 0.57 s
+c Found solution: 43213
+c [Elapsed time] 460.78 s
+c Found solution: 38387
+c [Elapsed time] 1449.17 s
+c Found solution: 36533
+c [Elapsed time] 2146.56 s
+c Found solution: 36167
+c [Elapsed time] 2263.36 s
+c Found solution: 35797
+c [Elapsed time] 2823.02 s
+c Found solution: 35700
+c [Elapsed time] 2913.52 s
+c Found solution: 35551
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c [UWrMaxSAT] Timeout reached.
+c [1mSATISFIABLE: Best solution found: 35551[0m
+v 9 28 32 54 77 97 99 122 137 142 160 176 185 204 221 228 252 264 271 286 307 318 323 345 353 371 380 394 420 424 446 454 469 489 501 519 542 551 568 577 598 616 620 642 685 687 711 723 730 749 764 773 786 792 793 797 803 808 810 816 818 822 827 829 836 837 841 846 851 856 859
+c _______________________________________________________________________________
+c 
+c restarts               : 1026902
+c conflicts              : 86732726       (24270 /sec)
+c decisions              : 1452100508     (0.00 % random) (406328 /sec)
+c propagations           : 15999812383    (4477082 /sec)
+c conflict literals      : 2434786187     (24.72 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1533.00 MB
+c CPU time               : 3573.71 s
+c OptExp Enc: Srt/BDD/Add: 3 0 0
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_burma14_r19v4k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=860 p3_burma14_r19v4k3_BDD.wcnf | tee p3_burma14_r19v4k3_BDD.wcnf.out
+Vehicle 0: d → 2 → 3 → 11 → 5 → 6 → 12 → 7 → 0 → 8 → 9 → 10 → 1 → d, (requests = [2, 3, 11, 13, 14])
+Vehicle 1: d → 1 → 10 → 8 → 9 → 0 → 7 → 12 → 6 → 5 → 4 → 11 → 2 → 3 → d, (requests = [0, 6, 8, 9, 15])
+Vehicle 2: d → 2 → 3 → 11 → 4 → 5 → 6 → 12 → 7 → 10 → 9 → 0 → 1 → d, (requests = [4, 10, 16, 18])
+Vehicle 3: d → 2 → 3 → 11 → 6 → 12 → 7 → 0 → 9 → 8 → 10 → 1 → d, (requests = [1, 5, 7, 12, 17])
+======== PPDSP OBJECTIVE ========
+Profit    = 11037
+Cost      = 2440
+Objective = 8597
+=================================
+[2026-02-06 13:51:59] finished
+>>> Finished Benchmarks for: burma14
+
+>>> Starting Benchmarks for: ulysses22
+Processing ulysses22 | Request=11 | Vehicle=2
+========================================================
+[2026-02-06 13:51:59] Running: python main.py maxsat p3 ulysses22 11 2 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 44622
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         65680                                         |
+c |  Number of clauses:          388795 (incl.          246 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 1.21 s
+c Found solution: 42751
+c [Elapsed time] 9.75 s
+c Found solution: 40999
+c [Elapsed time] 45.47 s
+c Found solution: 38959
+c [Elapsed time] 45.49 s
+c Found solution: 35798
+c [Elapsed time] 45.50 s
+c Found solution: 34202
+c [Elapsed time] 50.44 s
+c Found solution: 33035
+c [Elapsed time] 55.68 s
+c Found solution: 32787
+c [Elapsed time] 67.90 s
+c Found solution: 32742
+c [Elapsed time] 87.61 s
+c Found solution: 32616
+c [Elapsed time] 107.91 s
+c Found solution: 32356
+c [Elapsed time] 107.91 s
+c Found solution: 32251
+c [Elapsed time] 113.47 s
+c Found solution: 32235
+c [Elapsed time] 118.57 s
+c Found solution: 32182
+c [Elapsed time] 128.21 s
+c Found solution: 32176
+c [Elapsed time] 128.25 s
+c Found solution: 32135
+c [Elapsed time] 130.76 s
+c Found solution: 32132
+c [Elapsed time] 131.78 s
+c Found solution: 32128
+c [1mOptimal solution: 32128[0m
+c _______________________________________________________________________________
+c 
+c restarts               : 58963
+c conflicts              : 10648560       (76766 /sec)
+c decisions              : 117458331      (0.00 % random) (846768 /sec)
+c propagations           : 1061415410     (7651840 /sec)
+c conflict literals      : 173102903      (16.23 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 375.00 MB
+c CPU time               : 138.714 s
+c OptExp Enc: Srt/BDD/Add: 59 0 0
+c _______________________________________________________________________________
+o 32128
+s OPTIMUM FOUND
+v 95 144 176 255 280 301 313 338 476 601 635 654 682 691 740 760 776 827 900 912 954 970 973 976 979 981 983 986 988
+[rc2] Generating instance: p3_ulysses22_r11v2k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=990 p3_ulysses22_r11v2k3_BDD.wcnf | tee p3_ulysses22_r11v2k3_BDD.wcnf.out
+Vehicle 0: d → 13 → 14 → 4 → 6 → 11 → 12 → 15 → 7 → d, (requests = [2, 5, 6, 7])
+Vehicle 1: d → 7 → 15 → 12 → 11 → 13 → 5 → 6 → 18 → 19 → 9 → 8 → d, (requests = [0, 3, 8, 9])
+======== PPDSP OBJECTIVE ========
+Profit    = 15866
+Cost      = 3372
+Objective = 12494
+=================================
+[2026-02-06 13:54:20] finished
+Processing ulysses22 | Request=16 | Vehicle=3
+========================================================
+[2026-02-06 13:54:20] Running: python main.py maxsat p3 ulysses22 16 3 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 102885
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         85997                                         |
+c |  Number of clauses:          509805 (incl.          387 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 4.96 s
+c Found solution: 97309
+c [Elapsed time] 71.15 s
+c Found solution: 94954
+c [Elapsed time] 138.23 s
+c Found solution: 90553
+c [Elapsed time] 201.42 s
+c Found solution: 89366
+c [Elapsed time] 206.10 s
+c Found solution: 87868
+c [Elapsed time] 221.49 s
+c Found solution: 87267
+c [Elapsed time] 224.53 s
+c Found solution: 87012
+c [Elapsed time] 232.62 s
+c Found solution: 86935
+c [Elapsed time] 237.86 s
+c Found solution: 86816
+c [Elapsed time] 283.39 s
+c Found solution: 86815
+c [Elapsed time] 287.35 s
+c Found solution: 86811
+c [Elapsed time] 298.90 s
+c Found solution: 86806
+c [1mOptimal solution: 86806[0m
+c _______________________________________________________________________________
+c 
+c restarts               : 107103
+c conflicts              : 19128678       (63728 /sec)
+c decisions              : 266235636      (0.00 % random) (886982 /sec)
+c propagations           : 2036586006     (6785022 /sec)
+c conflict literals      : 331825098      (17.02 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 643.00 MB
+c CPU time               : 300.159 s
+c OptExp Enc: Srt/BDD/Add: 71 0 0
+c _______________________________________________________________________________
+o 86806
+s OPTIMUM FOUND
+v 601 635 654 740 760 785 798 827 901 946 954 1071 1144 1155 1193 1223 1248 1266 1290 1306 1373 1405 1450 1455 1461 1463 1469 1473 1476 1478 1481 1497 1499
+[rc2] Generating instance: p3_ulysses22_r16v3k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=1500 p3_ulysses22_r16v3k3_BDD.wcnf | tee p3_ulysses22_r16v3k3_BDD.wcnf.out
+Vehicle 0: d, (requests = [])
+Vehicle 1: d → 7 → 15 → 12 → 11 → 13 → 14 → 5 → 6 → 18 → 20 → d, (requests = [3, 5, 8, 9, 15])
+Vehicle 2: d → 19 → 18 → 8 → 10 → 4 → 14 → 13 → 11 → 12 → 15 → 7 → d, (requests = [0, 2, 6, 7, 14])
+======== PPDSP OBJECTIVE ========
+Profit    = 20113
+Cost      = 4034
+Objective = 16079
+=================================
+[2026-02-06 13:59:25] finished
+Processing ulysses22 | Request=21 | Vehicle=4
+========================================================
+[2026-02-06 13:59:25] Running: python main.py maxsat p3 ulysses22 21 4 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 199636
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        136405                                         |
+c |  Number of clauses:          808358 (incl.          532 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 106.21 s
+c Found solution: 193526
+c [Elapsed time] 381.13 s
+c Found solution: 192715
+c [Elapsed time] 511.43 s
+c Found solution: 190403
+c [Elapsed time] 514.53 s
+c Found solution: 188077
+c [Elapsed time] 514.56 s
+c Found solution: 186273
+c [Elapsed time] 765.32 s
+c Found solution: 186179
+c [Elapsed time] 765.36 s
+c Found solution: 186178
+c [Elapsed time] 864.39 s
+c Found solution: 185952
+c [Elapsed time] 865.02 s
+c Found solution: 183142
+c [Elapsed time] 887.38 s
+c Found solution: 182898
+c [Elapsed time] 898.67 s
+c Found solution: 182854
+c [Elapsed time] 900.89 s
+c Found solution: 182288
+c [Elapsed time] 919.20 s
+c Found solution: 182209
+c [Elapsed time] 926.25 s
+c Found solution: 181919
+c [Elapsed time] 941.33 s
+c Found solution: 181776
+c [Elapsed time] 941.59 s
+c Found solution: 181763
+c [Elapsed time] 951.34 s
+c Found solution: 181660
+c [Elapsed time] 973.99 s
+c Found solution: 181657
+c [Elapsed time] 1090.90 s
+c Found solution: 181631
+c [Elapsed time] 1093.99 s
+c Found solution: 181626
+c [Elapsed time] 1154.03 s
+c Found solution: 181625
+c [Elapsed time] 1155.90 s
+c Found solution: 181623
+c [Elapsed time] 1156.92 s
+c Found solution: 181619
+c [1mOptimal solution: 181619[0m
+c _______________________________________________________________________________
+c 
+c restarts               : 376661
+c conflicts              : 49470001       (42756 /sec)
+c decisions              : 990276741      (0.00 % random) (855877 /sec)
+c propagations           : 6771725352     (5852669 /sec)
+c conflict literals      : 974248056      (18.39 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1290.00 MB
+c CPU time               : 1157.03 s
+c OptExp Enc: Srt/BDD/Add: 89 0 0
+c _______________________________________________________________________________
+o 181619
+s OPTIMUM FOUND
+v 500 578 601 635 639 762 785 797 827 901 946 954 1071 1119 1144 1155 1175 1193 1217 1248 1267 1290 1306 1384 1396 1442 1939 1947 1951 1958 1963 1967 1970 1974 1995 1998 2018
+[rc2] Generating instance: p3_ulysses22_r21v4k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=2020 p3_ulysses22_r21v4k3_BDD.wcnf | tee p3_ulysses22_r21v4k3_BDD.wcnf.out
+Vehicle 0: d, (requests = [])
+Vehicle 1: d → 7 → 0 → 15 → 12 → 13 → 14 → 4 → 5 → 6 → 18 → 20 → d, (requests = [5, 8, 9, 15, 20])
+Vehicle 2: d → 11 → 6 → 18 → 19 → 9 → 8 → 10 → 4 → 14 → 13 → 12 → 15 → 7 → d, (requests = [0, 2, 3, 6, 7, 14])
+Vehicle 3: d, (requests = [])
+======== PPDSP OBJECTIVE ========
+Profit    = 22422
+Cost      = 4405
+Objective = 18017
+=================================
+[2026-02-06 14:18:55] finished
+Processing ulysses22 | Request=26 | Vehicle=5
+========================================================
+[2026-02-06 14:18:55] Running: python main.py maxsat p3 ulysses22 26 5 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 317540
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        176148                                         |
+c |  Number of clauses:         1046820 (incl.          685 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 183.08 s
+c Found solution: 307272
+c [Elapsed time] 1696.80 s
+c Found solution: 304579
+c [Elapsed time] 2703.67 s
+c Found solution: 302518
+c [Elapsed time] 2805.77 s
+c Found solution: 300865
+c [Elapsed time] 2984.69 s
+c Found solution: 300731
+c [Elapsed time] 2985.04 s
+c Found solution: 297887
+c [Elapsed time] 3072.72 s
+c Found solution: 295887
+c [Elapsed time] 3073.98 s
+c Found solution: 295277
+c [Elapsed time] 3095.72 s
+c Found solution: 294996
+c [Elapsed time] 3151.22 s
+c Found solution: 294923
+c [Elapsed time] 3151.29 s
+c Found solution: 294798
+c [Elapsed time] 3267.63 s
+c Found solution: 294771
+c [Elapsed time] 3299.77 s
+c Found solution: 294749
+c [Elapsed time] 3338.33 s
+c Found solution: 294746
+c [Elapsed time] 3338.45 s
+c Found solution: 294689
+c [Elapsed time] 3571.56 s
+c Found solution: 294681
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c [UWrMaxSAT] Timeout reached.
+c [1mSATISFIABLE: Best solution found: 294681[0m
+v 1071 1144 1155 1193 1223 1248 1266 1290 1306 1373 1405 1428 1451 1468 1546 1569 1603 1607 1708 1728 1753 1765 1795 1868 1891 1914 1922 2423 2433 2439 2449 2453 2458 2464 2469 2493 2499 2524 2528 2533
+c _______________________________________________________________________________
+c 
+c restarts               : 1241235
+c conflicts              : 98035661       (27406 /sec)
+c decisions              : 2959435200     (0.00 % random) (827308 /sec)
+c propagations           : 18283338928    (5111093 /sec)
+c conflict literals      : 2260036215     (19.62 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2017.00 MB
+c CPU time               : 3577.19 s
+c OptExp Enc: Srt/BDD/Add: 62 0 0
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_ulysses22_r26v5k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=2550 p3_ulysses22_r26v5k3_BDD.wcnf | tee p3_ulysses22_r26v5k3_BDD.wcnf.out
+Vehicle 0: d, (requests = [])
+Vehicle 1: d, (requests = [])
+Vehicle 2: d → 20 → 19 → 18 → 8 → 10 → 4 → 14 → 13 → 11 → 12 → 15 → 7 → d, (requests = [0, 2, 6, 7, 14, 21, 22])
+Vehicle 3: d → 7 → 0 → 15 → 12 → 11 → 13 → 14 → 4 → 5 → 6 → 18 → 19 → 20 → d, (requests = [3, 5, 8, 9, 15, 20])
+Vehicle 4: d, (requests = [])
+======== PPDSP OBJECTIVE ========
+Profit    = 27340
+Cost      = 4481
+Objective = 22859
+=================================
+[2026-02-06 15:19:00] finished
+Processing ulysses22 | Request=31 | Vehicle=5
+========================================================
+[2026-02-06 15:19:00] Running: python main.py maxsat p3 ulysses22 31 5 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 368100
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        182183                                         |
+c |  Number of clauses:         1082210 (incl.          710 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 62.80 s
+c Found solution: 357349
+c [Elapsed time] 2235.33 s
+c Found solution: 348496
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 348496[0m
+v 16 95 144 155 264 278 301 313 343 470 587 671 691 709 748 760 805 890 921 944 967 976 1062 1093 1119 1144 1155 1175 1193 1217 1248 1267 1290 1299 1384 1407 1418 1442 1551 1567 1606 1638 1671 1681 1708 1728 1753 1766 1855 1911 1927 1944 2039 2051 2112 2118 2154 2216 2235 2258 2267 2341 2375 2395 2408 2423 2433 2438 2449 2455 2458 2461 2469 2493 2499 2521 2527 2532 2553 2556
+c _______________________________________________________________________________
+c 
+c restarts               : 1251624
+c conflicts              : 98114174       (27409 /sec)
+c decisions              : 2981900950     (0.00 % random) (833030 /sec)
+c propagations           : 18744410092    (5236476 /sec)
+c conflict literals      : 2080257364     (18.25 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1625.00 MB
+c CPU time               : 3579.58 s
+c OptExp Enc: Srt/BDD/Add: 1 0 0
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_ulysses22_r31v5k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=2575 p3_ulysses22_r31v5k3_BDD.wcnf | tee p3_ulysses22_r31v5k3_BDD.wcnf.out
+Vehicle 0: d → 7 → 0 → 15 → 12 → 13 → 14 → 4 → 6 → 11 → d, (requests = [8, 20, 27])
+Vehicle 1: d → 20 → 19 → 18 → 9 → 8 → 10 → 4 → 14 → 12 → 11 → d, (requests = [21, 22])
+Vehicle 2: d → 11 → 6 → 18 → 19 → 20 → 9 → 8 → 10 → 4 → 5 → 14 → 13 → 12 → 15 → 0 → 7 → d, (requests = [0, 2, 3, 7, 14, 26])
+Vehicle 3: d → 12 → 11 → 13 → 14 → 5 → 4 → 10 → 8 → 9 → 20 → 18 → 6 → d, (requests = [5, 9, 15])
+Vehicle 4: d → 9 → 19 → 20 → 18 → 8 → 5 → 4 → 14 → 13 → 12 → 15 → 0 → 7 → d, (requests = [6])
+======== PPDSP OBJECTIVE ========
+Profit    = 32732
+Cost      = 13128
+Objective = 19604
+=================================
+[2026-02-06 16:19:05] finished
+>>> Finished Benchmarks for: ulysses22
+
+>>> Starting Benchmarks for: bays29
+Processing bays29 | Request=14 | Vehicle=3
+========================================================
+[2026-02-06 16:19:05] Running: python main.py maxsat p3 bays29 14 3 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 228945
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        118511                                         |
+c |  Number of clauses:          699810 (incl.          495 soft in queue)      |
+c ===============================================================================
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 228945[0m
+v
+c _______________________________________________________________________________
+c 
+c restarts               : 1101367
+c conflicts              : 89987426       (25118 /sec)
+c decisions              : 2032690177     (0.00 % random) (567384 /sec)
+c propagations           : 15180448560    (4237313 /sec)
+c conflict literals      : 1922785704     (19.51 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1546.00 MB
+c CPU time               : 3582.56 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_bays29_r14v3k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=2565 p3_bays29_r14v3k3_BDD.wcnf | tee p3_bays29_r14v3k3_BDD.wcnf.out
+[UWrMaxSAT] No solution.
+[2026-02-06 17:19:09] finished
+Processing bays29 | Request=21 | Vehicle=4
+========================================================
+[2026-02-06 17:19:09] Running: python main.py maxsat p3 bays29 21 4 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 425092
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        186558                                         |
+c |  Number of clauses:         1106790 (incl.          688 soft in queue)      |
+c ===============================================================================
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 425092[0m
+v
+c _______________________________________________________________________________
+c 
+c restarts               : 1256992
+c conflicts              : 100948387      (28190 /sec)
+c decisions              : 3008860924     (0.00 % random) (840244 /sec)
+c propagations           : 18337470143    (5120856 /sec)
+c conflict literals      : 1940147916     (17.61 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2041.00 MB
+c CPU time               : 3580.94 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_bays29_r21v4k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=3448 p3_bays29_r21v4k3_BDD.wcnf | tee p3_bays29_r21v4k3_BDD.wcnf.out
+[UWrMaxSAT] No solution.
+[2026-02-06 18:19:14] finished
+Processing bays29 | Request=28 | Vehicle=6
+========================================================
+[2026-02-06 18:19:14] Running: python main.py maxsat p3 bays29 28 6 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 871488
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        270105                                         |
+c |  Number of clauses:         1597471 (incl.         1062 soft in queue)      |
+c ===============================================================================
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 871488[0m
+v
+c _______________________________________________________________________________
+c 
+c restarts               : 1274739
+c conflicts              : 101608558      (28364 /sec)
+c decisions              : 4220201151     (0.00 % random) (1178058 /sec)
+c propagations           : 19904683196    (5556342 /sec)
+c conflict literals      : 1830995927     (16.96 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2177.00 MB
+c CPU time               : 3582.34 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_bays29_r28v6k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=5214 p3_bays29_r28v6k3_BDD.wcnf | tee p3_bays29_r28v6k3_BDD.wcnf.out
+[UWrMaxSAT] No solution.
+[2026-02-06 19:19:20] finished
+Processing bays29 | Request=35 | Vehicle=7
+========================================================
+[2026-02-06 19:19:20] Running: python main.py maxsat p3 bays29 35 7 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 1245713
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        355730                                         |
+c |  Number of clauses:         2116019 (incl.         1281 soft in queue)      |
+c ===============================================================================
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 1245713[0m
+v
+c _______________________________________________________________________________
+c 
+c restarts               : 1256707
+c conflicts              : 104888805      (29276 /sec)
+c decisions              : 4854487226     (0.00 % random) (1354937 /sec)
+c propagations           : 20780072445    (5799931 /sec)
+c conflict literals      : 1808659388     (17.08 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2684.00 MB
+c CPU time               : 3582.81 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_bays29_r35v7k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=6132 p3_bays29_r35v7k3_BDD.wcnf | tee p3_bays29_r35v7k3_BDD.wcnf.out
+[UWrMaxSAT] No solution.
+[2026-02-06 20:19:28] finished
+Processing bays29 | Request=42 | Vehicle=8
+========================================================
+[2026-02-06 20:19:28] Running: python main.py maxsat p3 bays29 42 8 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 1660720
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        420490                                         |
+c |  Number of clauses:         2497636 (incl.         1520 soft in queue)      |
+c ===============================================================================
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 1660720[0m
+v
+c _______________________________________________________________________________
+c 
+c restarts               : 1264605
+c conflicts              : 104928756      (29279 /sec)
+c decisions              : 5079996108     (0.00 % random) (1417494 /sec)
+c propagations           : 21219548785    (5920987 /sec)
+c conflict literals      : 1816955107     (17.44 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2755.00 MB
+c CPU time               : 3583.79 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_bays29_r42v8k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=7064 p3_bays29_r42v8k3_BDD.wcnf | tee p3_bays29_r42v8k3_BDD.wcnf.out
+[UWrMaxSAT] No solution.
+[2026-02-06 21:19:37] finished
+>>> Finished Benchmarks for: bays29
+
+>>> Starting Benchmarks for: P-n16-k8
+Processing P-n16-k8 | Request=8 | Vehicle=2
+========================================================
+[2026-02-06 21:19:37] Running: python main.py maxsat p3 P-n16-k8 8 2 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 72566
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         54643                                         |
+c |  Number of clauses:          323717 (incl.          184 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 17.64 s
+c Found solution: 60610
+c [Elapsed time] 63.87 s
+c Found solution: 58132
+c [Elapsed time] 100.13 s
+c Found solution: 48489
+c [Elapsed time] 123.87 s
+c Found solution: 47751
+c [Elapsed time] 154.28 s
+c Found solution: 46405
+c [Elapsed time] 158.36 s
+c Found solution: 45667
+c [Elapsed time] 439.90 s
+c Found solution: 44612
+c [Elapsed time] 558.37 s
+c Found solution: 44456
+c [Elapsed time] 619.90 s
+c Found solution: 44226
+c [Elapsed time] 674.64 s
+c Found solution: 44070
+c [Elapsed time] 887.74 s
+c Found solution: 43579
+c [Elapsed time] 1655.55 s
+c Found solution: 43542
+c [1mOptimal solution: 43542[0m
+c _______________________________________________________________________________
+c 
+c restarts               : 404926
+c conflicts              : 50045889       (21738 /sec)
+c decisions              : 328489824      (0.00 % random) (142684 /sec)
+c propagations           : 6312787961     (2742037 /sec)
+c conflict literals      : 1378968349     (26.84 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1249.00 MB
+c CPU time               : 2302.23 s
+c OptExp Enc: Srt/BDD/Add: 147 0 0
+c _______________________________________________________________________________
+o 43542
+s OPTIMUM FOUND
+v 22 44 71 96 109 115 146 186 200 245 279 304 366 371 397 402 456 473 506 513 516 518 519 522 523 525 528
+[rc2] Generating instance: p3_P-n16-k8_r8v2k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=528 p3_P-n16-k8_r8v2k3_BDD.wcnf | tee p3_P-n16-k8_r8v2k3_BDD.wcnf.out
+Vehicle 0: d → 4 → 6 → 12 → 7 → 2 → 11 → 9 → 1 → 5 → d, (requests = [0, 3, 5, 6])
+Vehicle 1: d → 9 → 1 → 6 → 13 → 8 → 12 → 7 → 2 → d, (requests = [1, 2, 4, 7])
+======== PPDSP OBJECTIVE ========
+Profit    = 36283
+Cost      = 7259
+Objective = 29024
+=================================
+[2026-02-06 21:58:10] finished
+Processing P-n16-k8 | Request=11 | Vehicle=3
+========================================================
+[2026-02-06 21:58:10] Running: python main.py maxsat p3 P-n16-k8 11 3 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 139623
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         70412                                         |
+c |  Number of clauses:          417098 (incl.          285 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 25.55 s
+c Found solution: 130477
+c [Elapsed time] 187.62 s
+c Found solution: 115954
+c [Elapsed time] 296.81 s
+c Found solution: 110684
+c [Elapsed time] 446.28 s
+c Found solution: 105752
+c [Elapsed time] 1047.14 s
+c Found solution: 105713
+c [Elapsed time] 1281.05 s
+c Found solution: 105692
+c [Elapsed time] 1497.17 s
+c Found solution: 105095
+c [Elapsed time] 1497.20 s
+c Found solution: 104794
+c [Elapsed time] 1734.83 s
+c Found solution: 103315
+c [Elapsed time] 2553.84 s
+c Found solution: 103222
+c [Elapsed time] 2555.38 s
+c Found solution: 101494
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c [UWrMaxSAT] Timeout reached.
+c [1mSATISFIABLE: Best solution found: 101494[0m
+v 266 279 300 320 329 366 371 397 402 447 456 469 484 497 522 541 552 575 593 614 626 647 672 676 691 713 748 763 771 773 776 780 782 785 789 791 795 797 801
+c _______________________________________________________________________________
+c 
+c restarts               : 773871
+c conflicts              : 71950819       (20067 /sec)
+c decisions              : 781627847      (0.00 % random) (217992 /sec)
+c propagations           : 10140279240    (2828073 /sec)
+c conflict literals      : 1949829662     (22.14 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1549.00 MB
+c CPU time               : 3585.58 s
+c OptExp Enc: Srt/BDD/Add: 56 0 0
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_P-n16-k8_r11v3k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=801 p3_P-n16-k8_r11v3k3_BDD.wcnf | tee p3_P-n16-k8_r11v3k3_BDD.wcnf.out
+Vehicle 0: d, (requests = [])
+Vehicle 1: d → 0 → 9 → 1 → 6 → 13 → 4 → 8 → 12 → 7 → 2 → 11 → 14 → 3 → d, (requests = [1, 2, 4, 5, 7, 9])
+Vehicle 2: d → 10 → 3 → 14 → 11 → 2 → 7 → 1 → 12 → 8 → 6 → 5 → 0 → 9 → d, (requests = [0, 3, 6, 8, 10])
+======== PPDSP OBJECTIVE ========
+Profit    = 46541
+Cost      = 8412
+Objective = 38129
+=================================
+[2026-02-06 22:58:12] finished
+Processing P-n16-k8 | Request=15 | Vehicle=3
+========================================================
+[2026-02-06 22:58:12] Running: python main.py maxsat p3 P-n16-k8 15 3 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 187908
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         75970                                         |
+c |  Number of clauses:          450487 (incl.          297 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 40.21 s
+c Found solution: 169653
+c [Elapsed time] 769.68 s
+c Found solution: 149918
+c [Elapsed time] 769.70 s
+c Found solution: 146043
+c [Elapsed time] 852.61 s
+c Found solution: 142434
+c [Elapsed time] 972.69 s
+c Found solution: 141679
+c [Elapsed time] 3127.03 s
+c Found solution: 141083
+c [Elapsed time] 3404.66 s
+c Found solution: 139649
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c [UWrMaxSAT] Timeout reached.
+c [1mSATISFIABLE: Best solution found: 139649[0m
+v 16 22 44 49 71 85 110 115 141 146 175 187 200 217 228 250 262 288 300 327 338 366 371 397 401 442 456 473 501 516 538 552 575 610 637 647 672 684 691 713 747 753 770 772 775 779 781 784 788 790 795 797 801 802 807 808 812
+c _______________________________________________________________________________
+c 
+c restarts               : 907741
+c conflicts              : 79122725       (22065 /sec)
+c decisions              : 1220703520     (0.00 % random) (340425 /sec)
+c propagations           : 11970020190    (3338152 /sec)
+c conflict literals      : 1912369197     (20.92 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1458.00 MB
+c CPU time               : 3585.82 s
+c OptExp Enc: Srt/BDD/Add: 1 0 0
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_P-n16-k8_r15v3k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=813 p3_P-n16-k8_r15v3k3_BDD.wcnf | tee p3_P-n16-k8_r15v3k3_BDD.wcnf.out
+Vehicle 0: d → 9 → 1 → 5 → 4 → 6 → 13 → 8 → 12 → 7 → 2 → 11 → 10 → 14 → 3 → 0 → d, (requests = [1, 2, 4, 5, 7, 11, 13])
+Vehicle 1: d → 4 → 6 → 13 → 8 → 12 → 7 → 2 → 11 → 9 → 0 → 5 → 1 → d, (requests = [0, 3, 6, 9, 14])
+Vehicle 2: d → 0 → 3 → 14 → 10 → 11 → 2 → 7 → 12 → 8 → 6 → 1 → 9 → d, (requests = [8, 10, 12])
+======== PPDSP OBJECTIVE ========
+Profit    = 62636
+Cost      = 14377
+Objective = 48259
+=================================
+[2026-02-06 23:58:14] finished
+Processing P-n16-k8 | Request=19 | Vehicle=4
+========================================================
+[2026-02-06 23:58:14] Running: python main.py maxsat p3 P-n16-k8 19 4 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 305516
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        119471                                         |
+c |  Number of clauses:          706761 (incl.          412 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 101.96 s
+c Found solution: 286812
+c [Elapsed time] 1901.01 s
+c Found solution: 271220
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 271220[0m
+v 6 78 85 109 144 145 201 215 250 266 278 300 305 343 366 371 397 402 420 447 456 473 496 507 522 535 552 561 592 613 626 659 676 699 748 767 774 794 827 839 853 877 882 924 944 959 968 996 1009 1030 1033 1040 1041 1048 1051 1054 1058 1066 1070 1075 1079
+c _______________________________________________________________________________
+c 
+c restarts               : 1237288
+c conflicts              : 96588671       (26955 /sec)
+c decisions              : 2122035674     (0.00 % random) (592189 /sec)
+c propagations           : 17095347826    (4770736 /sec)
+c conflict literals      : 2055649900     (18.39 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1558.00 MB
+c CPU time               : 3583.38 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_P-n16-k8_r19v4k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=1100 p3_P-n16-k8_r19v4k3_BDD.wcnf | tee p3_P-n16-k8_r19v4k3_BDD.wcnf.out
+Vehicle 0: d → 9 → 0 → 5 → 4 → 13 → 6 → 12 → 8 → d, (requests = [2, 4])
+Vehicle 1: d → 10 → 3 → 0 → 9 → 1 → 5 → 6 → 13 → 8 → 12 → 7 → 2 → 11 → 14 → d, (requests = [1, 7, 8, 10, 11])
+Vehicle 2: d → 14 → 11 → 10 → 3 → 0 → 9 → 2 → 7 → 1 → 6 → 4 → d, (requests = [6, 12, 13])
+Vehicle 3: d → 0 → 5 → 4 → 6 → 12 → 7 → 1 → 9 → 11 → 14 → 3 → 10 → d, (requests = [3, 5])
+======== PPDSP OBJECTIVE ========
+Profit    = 52375
+Cost      = 18079
+Objective = 34296
+=================================
+[2026-02-07 00:58:19] finished
+Processing P-n16-k8 | Request=22 | Vehicle=5
+========================================================
+[2026-02-07 00:58:19] Running: python main.py maxsat p3 P-n16-k8 22 5 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 431395
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        150303                                         |
+c |  Number of clauses:          891478 (incl.          530 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 99.46 s
+c Found solution: 417134
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 417134[0m
+v 6 42 71 85 109 142 145 201 224 243 266 278 300 305 329 341 365 371 398 402 432 447 456 471 491 500 518 535 556 561 594 621 654 659 703 713 736 740 762 1040 1265 1293 1307 1322 1327 1352 1357 1372 1383
+c _______________________________________________________________________________
+c 
+c restarts               : 1314897
+c conflicts              : 101726533      (28398 /sec)
+c decisions              : 2649192219     (0.00 % random) (739546 /sec)
+c propagations           : 18710130580    (5223101 /sec)
+c conflict literals      : 2116763120     (17.91 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1629.00 MB
+c CPU time               : 3582.19 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_P-n16-k8_r22v5k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=1390 p3_P-n16-k8_r22v5k3_BDD.wcnf | tee p3_P-n16-k8_r22v5k3_BDD.wcnf.out
+Vehicle 0: d → 2 → 9 → 0 → 5 → 4 → 6 → 12 → 8 → 13 → d, (requests = [])
+Vehicle 1: d → 3 → 0 → 9 → 1 → 5 → 4 → 8 → 13 → 6 → 12 → 7 → 2 → 11 → 14 → 10 → d, (requests = [5, 8, 9, 14, 15, 18])
+Vehicle 2: d → 9 → 2 → 11 → 14 → 3 → 0 → 5 → 1 → 6 → 12 → 8 → 13 → d, (requests = [2, 20])
+Vehicle 3: d, (requests = [])
+Vehicle 4: d → 0 → d, (requests = [])
+======== PPDSP OBJECTIVE ========
+Profit    = 29843
+Cost      = 15582
+Objective = 14261
+=================================
+[2026-02-07 01:58:23] finished
+>>> Finished Benchmarks for: P-n16-k8
+
+>>> Starting Benchmarks for: P-n23-k8
+Processing P-n23-k8 | Request=11 | Vehicle=2
+========================================================
+[2026-02-07 01:58:23] Running: python main.py maxsat p3 P-n23-k8 11 2 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 79150
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         73070                                         |
+c |  Number of clauses:          431704 (incl.          268 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 3.33 s
+c Found solution: 77416
+c [Elapsed time] 175.41 s
+c Found solution: 68146
+c [Elapsed time] 373.21 s
+c Found solution: 58191
+c [Elapsed time] 373.23 s
+c Found solution: 55035
+c [Elapsed time] 454.72 s
+c Found solution: 53876
+c [Elapsed time] 454.74 s
+c Found solution: 52119
+c [Elapsed time] 488.91 s
+c Found solution: 51689
+c [Elapsed time] 488.92 s
+c Found solution: 51395
+c [Elapsed time] 495.77 s
+c Found solution: 51097
+c [Elapsed time] 507.74 s
+c Found solution: 50944
+c [Elapsed time] 513.18 s
+c Found solution: 49904
+c [Elapsed time] 514.82 s
+c Found solution: 49267
+c [Elapsed time] 514.83 s
+c Found solution: 49197
+c [Elapsed time] 517.78 s
+c Found solution: 48569
+c [Elapsed time] 1844.92 s
+c Found solution: 48372
+c [Elapsed time] 1845.05 s
+c Found solution: 47986
+c [Elapsed time] 2047.05 s
+c Found solution: 47778
+c [Elapsed time] 2058.78 s
+c Found solution: 47628
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c [UWrMaxSAT] Timeout reached.
+c [1mSATISFIABLE: Best solution found: 47628[0m
+v 16 58 114 138 179 197 208 263 284 351 410 417 442 492 526 539 558 583 628 665 669 703 735 748 785 814 833 911 1012 1029 1036 1059 1061 1063 1065 1068 1070 1072 1074 1075 1077 1080
+c _______________________________________________________________________________
+c 
+c restarts               : 872739
+c conflicts              : 76524632       (21360 /sec)
+c decisions              : 950463806      (0.00 % random) (265296 /sec)
+c propagations           : 12247747974    (3418624 /sec)
+c conflict literals      : 2513865420     (22.89 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1525.00 MB
+c CPU time               : 3582.65 s
+c OptExp Enc: Srt/BDD/Add: 136 0 0
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_P-n23-k8_r11v2k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=1080 p3_P-n23-k8_r11v2k3_BDD.wcnf | tee p3_P-n23-k8_r11v2k3_BDD.wcnf.out
+Vehicle 0: d → 19 → 4 → 21 → 8 → 12 → 7 → 17 → 18 → 2 → 11 → 9 → 0 → 15 → 5 → d, (requests = [0, 1, 2, 3, 8, 9])
+Vehicle 1: d → 0 → 9 → 11 → 2 → 7 → 12 → 8 → 21 → 16 → 13 → 4 → 6 → 1 → 5 → 20 → d, (requests = [4, 5, 6, 7, 10])
+======== PPDSP OBJECTIVE ========
+Profit    = 39575
+Cost      = 8053
+Objective = 31522
+=================================
+[2026-02-07 02:58:26] finished
+Processing P-n23-k8 | Request=17 | Vehicle=3
+========================================================
+[2026-02-07 02:58:26] Running: python main.py maxsat p3 P-n23-k8 17 3 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 192861
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:         97539                                         |
+c |  Number of clauses:          577228 (incl.          420 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 4.48 s
+c Found solution: 186477
+c [Elapsed time] 2232.34 s
+c Found solution: 172917
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 172917[0m
+v 16 46 70 135 160 197 242 268 278 316 326 366 377 444 466 497 517 545 562 593 609 638 664 689 703 736 737 771 785 807 833 880 906 928 973 1026 1039 1068 1088 1122 1128 1167 1193 1202 1238 1255 1267 1292 1322 1342 1392 1435 1472 1475 1500 1579 1590 1592 1601 1603 1615 1619 1623 1635 1638
+c _______________________________________________________________________________
+c 
+c restarts               : 1082497
+c conflicts              : 88138669       (24582 /sec)
+c decisions              : 2065554121     (0.00 % random) (576092 /sec)
+c propagations           : 14600345213    (4072096 /sec)
+c conflict literals      : 1947732540     (19.75 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1522.00 MB
+c CPU time               : 3585.46 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_P-n23-k8_r17v3k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=1638 p3_P-n23-k8_r17v3k3_BDD.wcnf | tee p3_P-n23-k8_r17v3k3_BDD.wcnf.out
+Vehicle 0: d → 10 → 11 → 14 → 3 → 0 → 15 → 20 → 5 → 19 → 6 → 21 → 13 → 16 → 8 → 12 → 1 → d, (requests = [5, 9])
+Vehicle 1: d → 3 → 10 → 11 → 2 → 17 → 7 → 12 → 1 → 9 → 0 → 15 → 5 → 19 → 6 → 21 → 13 → 4 → 16 → 8 → d, (requests = [1, 4, 10])
+Vehicle 2: d → 14 → 11 → 10 → 3 → 0 → 9 → 1 → 6 → 5 → 19 → 4 → 16 → 8 → 12 → 7 → 18 → 2 → 17 → d, (requests = [0, 11, 15, 16])
+======== PPDSP OBJECTIVE ========
+Profit    = 37886
+Cost      = 17942
+Objective = 19944
+=================================
+[2026-02-07 03:58:29] finished
+Processing P-n23-k8 | Request=22 | Vehicle=4
+========================================================
+[2026-02-07 03:58:29] Running: python main.py maxsat p3 P-n23-k8 22 4 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 345860
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        152112                                         |
+c |  Number of clauses:          901616 (incl.          580 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 3021.20 s
+c Found solution: 326824
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 326824[0m
+v 16 33 70 109 135 151 206 219 234 264 299 351 377 442 490 508 539 594 641 665 689 703 730 748 785 812 875 902 951 972 1005 1035 1044 1087 1193 1219 1232 1336 1457 1502 1582 1591 1671 1699 1718 1747 1761 1817 1850 1870 1921 1933 2009 2030 2075 2112 2118 2123 2128 2132 2152 2172 2174 2189 2202
+c _______________________________________________________________________________
+c 
+c restarts               : 1220492
+c conflicts              : 96534350       (26942 /sec)
+c decisions              : 2891284060     (0.00 % random) (806939 /sec)
+c propagations           : 17707544919    (4942065 /sec)
+c conflict literals      : 1939703196     (17.55 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1986.00 MB
+c CPU time               : 3583.03 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_P-n23-k8_r22v4k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=2204 p3_P-n23-k8_r22v4k3_BDD.wcnf | tee p3_P-n23-k8_r22v4k3_BDD.wcnf.out
+Vehicle 0: d → 1 → 9 → 11 → 10 → 3 → 0 → 15 → 5 → 19 → 4 → 16 → 8 → 21 → 6 → 12 → d, (requests = [18])
+Vehicle 1: d → 8 → 16 → 4 → 19 → 5 → 20 → 15 → 0 → 9 → 11 → 2 → 18 → 7 → 12 → 6 → 21 → d, (requests = [0, 14, 21])
+Vehicle 2: d → 17 → 7 → 12 → 1 → 5 → 19 → 6 → d, (requests = [1])
+Vehicle 3: d → 18 → 7 → 12 → 6 → 21 → 4 → 19 → 5 → 15 → 0 → 3 → 14 → 11 → 9 → d, (requests = [2, 3, 8, 13])
+======== PPDSP OBJECTIVE ========
+Profit    = 38554
+Cost      = 19518
+Objective = 19036
+=================================
+[2026-02-07 04:58:35] finished
+Processing P-n23-k8 | Request=28 | Vehicle=5
+========================================================
+[2026-02-07 04:58:35] Running: python main.py maxsat p3 P-n23-k8 28 5 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 563605
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        199041                                         |
+c |  Number of clauses:         1179435 (incl.          755 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 56.61 s
+c Found solution: 561924
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 561924[0m
+v 16 33 70 109 122 158 184 197 219 234 268 284 333 351 377 442 508 558 643 664 690 703 807 971 1019 1043 1062 1112 1138 1164 1193 1202 1232 1264 1300 1314 1343 1380 1500 1548 1565 1623 1652 1704 1731 1751 1871 2024 2077 2115 2726 2736 2741 2768
+c _______________________________________________________________________________
+c 
+c restarts               : 1262353
+c conflicts              : 100877658      (28166 /sec)
+c decisions              : 3302582837     (0.00 % random) (922114 /sec)
+c propagations           : 18906927913    (5279002 /sec)
+c conflict literals      : 1970023156     (17.31 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2079.00 MB
+c CPU time               : 3581.53 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_P-n23-k8_r28v5k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=2785 p3_P-n23-k8_r28v5k3_BDD.wcnf | tee p3_P-n23-k8_r28v5k3_BDD.wcnf.out
+Vehicle 0: d → 1 → 9 → 11 → 14 → 10 → 3 → 0 → 15 → 5 → 6 → 19 → 4 → 16 → 8 → 12 → 7 → d, (requests = [16, 18, 19])
+Vehicle 1: d → 7 → 12 → 1 → 5 → 19 → 4 → 21 → 6 → d, (requests = [])
+Vehicle 2: d → 0 → 3 → 10 → 11 → 2 → 7 → 12 → 8 → 21 → 6 → 5 → 19 → 4 → 13 → d, (requests = [24])
+Vehicle 3: d → 21 → 6 → 5 → 1 → 12 → 7 → 2 → 18 → d, (requests = [])
+Vehicle 4: d, (requests = [])
+======== PPDSP OBJECTIVE ========
+Profit    = 19204
+Cost      = 17523
+Objective = 1681
+=================================
+[2026-02-07 05:58:40] finished
+Processing P-n23-k8 | Request=33 | Vehicle=6
+========================================================
+[2026-02-07 05:58:40] Running: python main.py maxsat p3 P-n23-k8 33 6 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 781962
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        228839                                         |
+c |  Number of clauses:         1354577 (incl.          936 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 179.58 s
+c Found solution: 769243
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 769243[0m
+v 1189 1426 1570 1591 1620 1641 1667 1699 1709 1747 1761 1788 1795 1829 1843 1872 1960 2030 2093 2095 2322 2493 2622 2639 2757 2767 2806 2949 3088 3142 3173 3216 3244 3250 3286 3334
+c _______________________________________________________________________________
+c 
+c restarts               : 1264010
+c conflicts              : 101815291      (28430 /sec)
+c decisions              : 3647432785     (0.00 % random) (1018478 /sec)
+c propagations           : 19549042402    (5458706 /sec)
+c conflict literals      : 1963310987     (17.38 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2139.00 MB
+c CPU time               : 3581.26 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_P-n23-k8_r33v6k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=3372 p3_P-n23-k8_r33v6k3_BDD.wcnf | tee p3_P-n23-k8_r33v6k3_BDD.wcnf.out
+Vehicle 0: d, (requests = [])
+Vehicle 1: d, (requests = [])
+Vehicle 2: d → 5 → 15 → d, (requests = [])
+Vehicle 3: d → 1 → 9 → 0 → 3 → 10 → 11 → 2 → 7 → 12 → 8 → 16 → 4 → 19 → 5 → 6 → 21 → d, (requests = [11, 12, 18, 26])
+Vehicle 4: d → 16 → 8 → 21 → d, (requests = [])
+Vehicle 5: d → 21 → 13 → 4 → 19 → 5 → 6 → d, (requests = [6])
+======== PPDSP OBJECTIVE ========
+Profit    = 23804
+Cost      = 11085
+Objective = 12719
+=================================
+[2026-02-07 06:58:44] finished
+>>> Finished Benchmarks for: P-n23-k8
+
+>>> Starting Benchmarks for: A-n32-k5
+Processing A-n32-k5 | Request=16 | Vehicle=3
+========================================================
+[2026-02-07 06:58:44] Running: python main.py maxsat p3 A-n32-k5 16 3 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 381252
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        127756                                         |
+c |  Number of clauses:          755746 (incl.          558 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 103.81 s
+c Found solution: 368028
+c [Elapsed time] 541.66 s
+c Found solution: 351599
+c [Elapsed time] 1058.25 s
+c Found solution: 334646
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c [UWrMaxSAT] Timeout reached.
+c [1mSATISFIABLE: Best solution found: 334646[0m
+v 13 153 208 288 303 382 391 443 470 492 613 681 756 797 814 856 906 954 993 1037 1172 1327 1429 1464 1501 1505 1555 1632 1659 1695 1786 1802 1840 1870 1925 2001 2041 2061 2144 2155 2205 2266 2276 2396 2401 2439 2518 2661 2728 2755 2804 2872 2935 2959 2988 3070 3088 3093 3101 3103 3107 3112 3117
+c _______________________________________________________________________________
+c 
+c restarts               : 1263291
+c conflicts              : 99376463       (27773 /sec)
+c decisions              : 1683745533     (0.00 % random) (470562 /sec)
+c propagations           : 14579895739    (4074695 /sec)
+c conflict literals      : 2904793224     (25.22 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 1584.00 MB
+c CPU time               : 3578.16 s
+c OptExp Enc: Srt/BDD/Add: 1 0 0
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_A-n32-k5_r16v3k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=3120 p3_A-n32-k5_r16v3k3_BDD.wcnf | tee p3_A-n32-k5_r16v3k3_BDD.wcnf.out
+Vehicle 0: d → 0 → 12 → 6 → 15 → 11 → 29 → 25 → 13 → 26 → 23 → 19 → 4 → 24 → 28 → 9 → 14 → 21 → 8 → d, (requests = [5, 10, 13])
+Vehicle 1: d → 24 → 9 → 14 → 28 → 4 → 19 → 26 → 13 → 23 → 25 → 15 → 0 → 12 → 20 → 30 → 16 → 18 → d, (requests = [9, 11])
+Vehicle 2: d → 29 → 11 → 0 → 12 → 6 → 25 → 23 → 19 → 4 → 28 → 14 → 21 → 7 → 3 → 10 → 27 → 22 → 2 → d, (requests = [6, 14])
+======== PPDSP OBJECTIVE ========
+Profit    = 71017
+Cost      = 24411
+Objective = 46606
+=================================
+[2026-02-07 07:58:50] finished
+Processing A-n32-k5 | Request=23 | Vehicle=5
+========================================================
+[2026-02-07 07:58:50] Running: python main.py maxsat p3 A-n32-k5 23 5 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 860040
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        246649                                         |
+c |  Number of clauses:         1454387 (incl.          960 soft in queue)      |
+c ===============================================================================
+c [Elapsed time] 3085.96 s
+c Found solution: 846907
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 846907[0m
+v 384 1004 1037 1131 1172 1217 1257 1298 1341 1372 1392 1429 1482 1511 1555 1590 1632 1656 1681 1711 1786 1797 1854 1896 1945 1964 2020 2176 2201 2266 2290 2312 2351 2439 2518 2620 2661 2729 2804 2826 2872 2916 3053 3290 3456 3902 4012 4071 4224 4324 4424 4971 5116 5177 5188 5207 5220
+c _______________________________________________________________________________
+c 
+c restarts               : 1252332
+c conflicts              : 98446559       (27478 /sec)
+c decisions              : 5597722912     (0.00 % random) (1562434 /sec)
+c propagations           : 21149186515    (5903152 /sec)
+c conflict literals      : 1773117493     (16.10 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2141.00 MB
+c CPU time               : 3582.69 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_A-n32-k5_r23v5k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=5235 p3_A-n32-k5_r23v5k3_BDD.wcnf | tee p3_A-n32-k5_r23v5k3_BDD.wcnf.out
+Vehicle 0: d → 11 → d, (requests = [])
+Vehicle 1: d → 3 → 10 → 27 → 7 → 8 → 17 → 21 → 14 → 9 → 28 → 24 → 4 → 19 → 23 → 25 → 29 → 11 → 15 → 6 → 0 → 12 → 20 → 16 → 18 → d, (requests = [11, 17])
+Vehicle 2: d → 12 → 6 → 25 → 23 → 19 → 4 → 24 → 9 → 14 → 21 → 8 → 7 → 17 → 27 → 3 → d, (requests = [13])
+Vehicle 3: d → 6 → 25 → 29 → 11 → d, (requests = [])
+Vehicle 4: d → 27 → 10 → 7 → 3 → d, (requests = [19])
+======== PPDSP OBJECTIVE ========
+Profit    = 40398
+Cost      = 27265
+Objective = 13133
+=================================
+[2026-02-07 08:58:55] finished
+Processing A-n32-k5 | Request=31 | Vehicle=6
+========================================================
+[2026-02-07 08:58:55] Running: python main.py maxsat p3 A-n32-k5 31 6 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 1333362
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        292003                                         |
+c |  Number of clauses:         1726677 (incl.         1200 soft in queue)      |
+c ===============================================================================
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 1333362[0m
+v
+c _______________________________________________________________________________
+c 
+c restarts               : 1212343
+c conflicts              : 97578006       (27222 /sec)
+c decisions              : 6117173266     (0.00 % random) (1706527 /sec)
+c propagations           : 21771399993    (6073635 /sec)
+c conflict literals      : 1724832249     (15.59 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2548.00 MB
+c CPU time               : 3584.58 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_A-n32-k5_r31v6k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=6330 p3_A-n32-k5_r31v6k3_BDD.wcnf | tee p3_A-n32-k5_r31v6k3_BDD.wcnf.out
+[UWrMaxSAT] No solution.
+[2026-02-07 09:59:03] finished
+Processing A-n32-k5 | Request=39 | Vehicle=7
+========================================================
+[2026-02-07 09:59:03] Running: python main.py maxsat p3 A-n32-k5 39 7 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 1988651
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        388391                                         |
+c |  Number of clauses:         2305392 (incl.         1449 soft in queue)      |
+c ===============================================================================
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 1988651[0m
+v
+c _______________________________________________________________________________
+c 
+c restarts               : 1222958
+c conflicts              : 100658386      (28083 /sec)
+c decisions              : 6470958244     (0.00 % random) (1805350 /sec)
+c propagations           : 22720355559    (6338814 /sec)
+c conflict literals      : 1700448809     (15.22 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2698.00 MB
+c CPU time               : 3584.32 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_A-n32-k5_r39v7k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=7441 p3_A-n32-k5_r39v7k3_BDD.wcnf | tee p3_A-n32-k5_r39v7k3_BDD.wcnf.out
+[UWrMaxSAT] No solution.
+[2026-02-07 10:59:11] finished
+Processing A-n32-k5 | Request=46 | Vehicle=9
+========================================================
+[2026-02-07 10:59:11] Running: python main.py maxsat p3 A-n32-k5 46 9 3
+c Using COMiniSatPS SAT solver by Chanseok Oh (2016)
+c Parsing MaxSAT file...
+c Start timer (tic-tac ...)
+c c Found solution: 3028770
+c ============================[  Problem Statistics ]============================
+c |  Number of variables:        499958                                         |
+c |  Number of clauses:         2965518 (incl.         1926 soft in queue)      |
+c ===============================================================================
+c [UWrMaxSAT] Timeout reached inside slice loop. Stopping.
+c *** Interrupted ***
+c [1mSATISFIABLE: Best solution found: 3028770[0m
+v
+c _______________________________________________________________________________
+c 
+c restarts               : 1215877
+c conflicts              : 101438219      (28293 /sec)
+c decisions              : 7706881816     (0.00 % random) (2149625 /sec)
+c propagations           : 24089668116    (6719157 /sec)
+c conflict literals      : 1690591192     (15.25 % deleted)
+c =======================[ UWrMaxSat resources usage ]===========================
+c Memory used            : 2862.00 MB
+c CPU time               : 3585.22 s
+c _______________________________________________________________________________
+c SATISFIABLE
+
+[rc2] Generating instance: p3_A-n32-k5_r46v9k3_BDD.wcnf ...
+[UWrMaxSAT] Running command:
+  stdbuf -oL uwrmaxsat -no-bin -no-sat -no-par -no-scip -ppdsp-time=3600 -ppdsp-lastY=9630 p3_A-n32-k5_r46v9k3_BDD.wcnf | tee p3_A-n32-k5_r46v9k3_BDD.wcnf.out
+[UWrMaxSAT] No solution.
+[2026-02-07 11:59:23] finished
+>>> Finished Benchmarks for: A-n32-k5
+
+All Experiments Completed Successfully.
