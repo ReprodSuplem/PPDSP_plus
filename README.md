@@ -56,8 +56,16 @@ conda activate exp-env
 ```
 
 ### 2.2 External Solvers
-1. **UWrMaxSat**: Must be compiled from `UWrMaxSat-SCIP-MaxPre/` and accessible as `uwrmaxsat` in your system `PATH`. During execution, the solver is invoked with `-no-bin -no-sat -no-par -no-scip` to enforce single-threaded, pure core-guided MaxSAT resolution.
-2. **IBM ILOG CPLEX Optimization Studio (v22.1.1.0)**: Required for running the `mip` baseline mode (restricted to 1 thread and a 3600-second CPU time limit).
+- **UWrMaxSat**: Must be compiled from `UWrMaxSat-SCIP-MaxPre/`. A build script is provided to compile `uwrmaxsat` alongside its required libraries (COMiniSatPS, MaxPre, and SCIP) and register the binary on your system `PATH`. From the repository root, execute:
+```bash
+cd UWrMaxSat-SCIP-MaxPre
+chmod +x code/starexec_build
+./code/starexec_build
+source ~/.bashrc
+```
+During execution, the solver is invoked with `-no-bin -no-sat -no-par -no-scip` to enforce single-threaded, pure core-guided MaxSAT resolution.
+
+- **IBM ILOG CPLEX Optimization Studio (v22.1.1.0)**: Required for running the `mip` baseline mode (restricted to 1 thread and a 3600-second CPU time limit).
 
 ---
 
