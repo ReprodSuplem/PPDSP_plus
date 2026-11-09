@@ -1,36 +1,50 @@
 import re
+import sys
 import pandas as pd
 import numpy as np
 import glob
 import os
 
+EXPECTED_WCNF_COUNT = 150  # 30 benchmark instances x 5 PB encodings
+
 def load_wcnf_stats():
     stats_map = {}
-    files = glob.glob("*.wcnf")
-    if not files: return stats_map
+    # Search current directory and parent directory for generated .wcnf files
+    files = glob.glob("*.wcnf") + glob.glob("../*.wcnf")
     pattern = re.compile(r"^([a-z0-9\-]+)_([a-zA-Z0-9\-]+)_r(\d+)v(\d+)k\d+_([A-Z]+)\.wcnf$")
-    for fname in files:
+    for fpath in files:
+        fname = os.path.basename(fpath)
         match = pattern.match(fname)
         if match:
             instance, R, T, enc = match.group(2), int(match.group(3)), int(match.group(4)), match.group(5)
             if enc == 'BA': enc = 'AN'
             try:
-                with open(fname, 'r') as f:
+                with open(fpath, 'r') as f:
                     header = f.readline().strip()
                     if header.startswith('p wcnf'):
                         parts = header.split()
                         if len(parts) >= 4:
                             stats_map[(instance, R, T, enc)] = (int(parts[2]), int(parts[3]))
-            except: pass
+            except Exception as e:
+                print(f"[Error] Failed to read WCNF header from {fpath}: {e}", file=sys.stderr)
+                sys.exit(1)
+
+    if len(stats_map) < EXPECTED_WCNF_COUNT:
+        print(
+            f"[Fatal Error] Incomplete .wcnf files: found {len(stats_map)} of {EXPECTED_WCNF_COUNT} required .wcnf files.\n"
+            f"Formula size statistics (variables and clauses) must be extracted strictly from raw .wcnf headers.\n"
+            f"Please generate all .wcnf files before running analyze_results_PB.py.",
+            file=sys.stderr
+        )
+        sys.exit(1)
+
     return stats_map
 
-def parse_logs():
+def parse_logs(wcnf_map):
     data = {}
     mip_bounds = {}
     
-    # MaxSAT patterns
-    vars_pat = re.compile(r"c \|\s+Number of variables:\s+(\d+)")
-    cl_pat = re.compile(r"c \|\s+Number of clauses:\s+(\d+)")
+    # MaxSAT patterns (variables and clauses are strictly read from .wcnf headers, not logs)
     ms_sol_pat = re.compile(r"c Found solution: (\d+)")
     ms_time_pat = re.compile(r"c \[Elapsed time\] ([\d\.]+) s")
     ms_obj_pat = re.compile(r"Objective = ([\d\.-]+)")
@@ -49,8 +63,6 @@ def parse_logs():
     if os.path.exists("full_experiment.log"): 
         if "full_experiment.log" not in log_files: 
             log_files.append("full_experiment.log")
-    
-    wcnf_map = load_wcnf_stats()
 
     for log_file in log_files:
         enc_match = re.search(r'full_experiment_([A-Z]+)\.log', log_file)
@@ -73,8 +85,10 @@ def parse_logs():
                 if current_log_enc is None: return 
                 current_run['config'] = current_log_enc
                 k_wcnf = (current_run['instance'], current_run['R'], current_run['T'], current_log_enc)
-                if k_wcnf in wcnf_map:
-                    current_run['variables'], current_run['clauses'] = wcnf_map[k_wcnf]
+                if k_wcnf not in wcnf_map:
+                    print(f"[Fatal Error] Missing .wcnf file for {k_wcnf}. Aborting.", file=sys.stderr)
+                    sys.exit(1)
+                current_run['variables'], current_run['clauses'] = wcnf_map[k_wcnf]
                 
                 if ms_true_obj is not None:
                     current_run['objective'] = ms_true_obj
@@ -127,13 +141,6 @@ def parse_logs():
             if not current_run or not current_run.get('method'): continue
             
             if current_run['method'] == 'maxsat':
-                if "Number of variables:" in line:
-                    m1 = vars_pat.search(line)
-                    if m1: current_run['variables'] = int(m1.group(1))
-                if "Number of clauses:" in line:
-                    m2 = cl_pat.search(line)
-                    if m2: current_run['clauses'] = int(m2.group(1))
-                
                 if "conflicts" in line:
                     m_conf = ms_conflicts_pat.search(line)
                     if m_conf: current_run['conflicts'] = int(m_conf.group(1))
@@ -176,8 +183,8 @@ def parse_logs():
                 if line.endswith('%'):
                     parts = line.split()
                     try:
-                        if '.' in parts[-2]: mip_temp_bound = float(parts[-2])
-                        elif '.' in parts[-3]: mip_temp_bound = float(parts[-3])
+                        if '.' in parts[-2] and 'e' not in parts[-2].lower(): mip_temp_bound = float(parts[-2])
+                        elif '.' in parts[-3] and 'e' not in parts[-3].lower(): mip_temp_bound = float(parts[-3])
                     except: pass
                     
         save_run() 
@@ -186,7 +193,8 @@ def parse_logs():
 
 if __name__ == "__main__":
     print(">>> Loading SMC Experiment Data...\n")
-    df, mip_bounds = parse_logs()
+    wcnf_map = load_wcnf_stats()
+    df, mip_bounds = parse_logs(wcnf_map)
     
     df['objective'] = pd.to_numeric(df['objective'], errors='coerce')
     df['time'] = pd.to_numeric(df['time'], errors='coerce')
@@ -245,7 +253,6 @@ if __name__ == "__main__":
     uc_df = df[df['config'] != 'MIP'].groupby('config')[['up', 'conflicts']].mean().reset_index()
     for _, row in uc_df.iterrows():
         if pd.notnull(row['up']) and pd.notnull(row['conflicts']):
-            # up的数字较大，所以给15位占位符以确保对齐美观
             print(f" - {row['config']:<5} -> UP: {int(row['up']):<15} | Conflicts: {int(row['conflicts'])}")
 
     df['time'] = df['time'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
